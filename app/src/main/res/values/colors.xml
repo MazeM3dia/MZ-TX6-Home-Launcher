@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_top">#FF1B2330</color>
+    <color name="background_bottom">#FF0D1117</color>
+    <color name="tile">#FF263040</color>
+    <color name="tile_focused">#FF34425A</color>
+    <color name="focus_ring">#FFFFFFFF</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFAAB4C3</color>
+    <color name="launcher_icon_background">#FF2B6CB0</color>
+</resources>

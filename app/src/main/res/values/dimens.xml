@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TV safe area: about 5% of the TX6's 1442x811 dp screen, so overscan never cuts the edges. -->
+    <dimen name="safe_horizontal">72dp</dimen>
+    <dimen name="safe_vertical">40dp</dimen>
+    <!-- Room for a focused tile to grow (scale 1.08) inside the safe area; root_horizontal + grow_room = safe_horizontal. -->
+    <dimen name="grow_room">16dp</dimen>
+    <dimen name="root_horizontal">56dp</dimen>
+    <dimen name="tile_gap">24dp</dimen>
+    <dimen name="tile_radius">8dp</dimen>
+    <dimen name="focus_ring">3dp</dimen>
+    <dimen name="tile_icon">72dp</dimen>
+    <dimen name="tile_label">16sp</dimen>
+    <dimen name="clock">56sp</dimen>
+    <dimen name="date">20sp</dimen>
+    <dimen name="button_text">18sp</dimen>
+</resources>

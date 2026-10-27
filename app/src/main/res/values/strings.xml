@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MZ TX6 Home</string>
+    <string name="settings">Settings</string>
+    <string name="no_apps">No apps found</string>
+    <string name="cannot_open">Can\'t open %1$s</string>
+    <string name="cannot_open_settings">Can\'t open Settings</string>
+    <!-- TextClock patterns: the 12- or 24-hour one follows the box's time setting. -->
+    <string name="time_12" translatable="false">h:mm</string>
+    <string name="time_24" translatable="false">HH:mm</string>
+    <string name="date_format" translatable="false">EEEE, d MMMM</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Tx6Home" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@drawable/window_background</item>
+        <item name="android:colorAccent">@color/focus_ring</item>
+        <!-- Home is never animated in or out by the window manager: one less thing for the Mali-T720. -->
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>
