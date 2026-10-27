@@ -5,18 +5,21 @@
         <item name="android:colorAccent">@color/text_primary</item>
         <!-- Home is never animated in or out by the window manager: one less thing for the Mali-T720. -->
         <item name="android:windowAnimationStyle">@null</item>
+        <!-- Inter for every text, menus included. -->
+        <item name="android:fontFamily">@font/inter_display_regular</item>
     </style>
 
-    <!-- The three type styles. Every text picks one, so the typeface is set in one place. -->
+    <!-- The three type styles. Every text picks one, so the typeface is set in one place: Inter Display, trimmed to
+         Latin (res/font, about 51 KB each; licence in FONT-LICENSE-OFL.txt). -->
     <style name="Font" />
     <style name="Font.Display">
-        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:fontFamily">@font/inter_display_light</item>
     </style>
     <style name="Font.Text">
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:fontFamily">@font/inter_display_regular</item>
     </style>
     <style name="Font.Medium">
-        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">@font/inter_display_medium</item>
     </style>
 
     <!-- Customize and Settings: focusable pills. The background comes from Palette.button(). -->
@@ -51,5 +54,7 @@
     </style>
 
     <!-- Tile menu and Customize dialogs: the platform's dark dialog, which the D-pad already drives. -->
-    <style name="Dialog" parent="@android:style/Theme.Material.Dialog.Alert" />
+    <style name="Dialog" parent="@android:style/Theme.Material.Dialog.Alert">
+        <item name="android:fontFamily">@font/inter_display_regular</item>
+    </style>
 </resources>
