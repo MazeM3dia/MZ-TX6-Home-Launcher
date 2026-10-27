@@ -201,8 +201,8 @@ public final class MainActivity extends Activity {
         ImageView icon = new ImageView(this);
         icon.setImageResource(ICONS[index]);
         icon.setImageTintList(ColorStateList.valueOf(highlight ? 0xFFFFFFFF : prayer ? accent : 0x80FFFFFF));
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(36), dp(36));
-        iconParams.bottomMargin = dp(12);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(48), dp(48));
+        iconParams.bottomMargin = dp(14);
         card.addView(icon, iconParams);
         TextView name = centered(text(22, medium, fg));
         name.setText(Jakim.NAMES[index]);
