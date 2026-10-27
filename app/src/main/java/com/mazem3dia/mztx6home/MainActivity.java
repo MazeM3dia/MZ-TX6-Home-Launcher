@@ -64,6 +64,7 @@ public final class MainActivity extends Activity {
     private GridLayout dock;
     private GridLayout grid;
     private View dockBand;
+    private View spacer;
     private TextView hero;
     private TextView greeting;
     private View amPm;
@@ -117,6 +118,7 @@ public final class MainActivity extends Activity {
         dock = findViewById(R.id.dock);
         grid = findViewById(R.id.grid);
         dockBand = findViewById(R.id.dock_band);
+        spacer = findViewById(R.id.spacer);
         hero = findViewById(R.id.hero);
         greeting = findViewById(R.id.greeting);
         amPm = findViewById(R.id.am_pm);
@@ -145,6 +147,7 @@ public final class MainActivity extends Activity {
         if (!prefs.buttonLabels()) iconOnly(customize, (TextView) settings, networkPill);
         setAnimations(prefs.animations());
         if (prefs.glow()) setUpGlow();
+        findViewById(R.id.content).getViewTreeObserver().addOnGlobalLayoutListener(this::fitSpacer);
         // The greeting changes with the hour; the clock's own minute tick keeps it current, no timer needed.
         ((TextView) findViewById(R.id.clock)).addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
@@ -402,6 +405,23 @@ public final class MainActivity extends Activity {
         ((TextView) tile.findViewById(R.id.label)).setText(app.label);
         tile.setTag(app);
         tile.setContentDescription(app.label);
+    }
+
+    /**
+     * Sizes the breathing room above the hero line so the favourites band (or, with no favourites, the first row
+     * of apps) ends focus_margin_bottom above the screen's bottom edge on the first screen. Runs after every
+     * layout; it changes the spacer only when the answer changes, so the second pass stops there.
+     */
+    private void fitSpacer() {
+        boolean band = dockBand.getVisibility() == View.VISIBLE;
+        if (scroll.getHeight() == 0 || (!band && grid.getChildCount() == 0)) return;
+        int anchorBottom = band ? dockBand.getBottom() : grid.getTop() + grid.getChildAt(0).getBottom();
+        int belowSpacer = anchorBottom - spacer.getHeight();
+        int room = scroll.getHeight() - scroll.getPaddingTop() - px(R.dimen.focus_margin_bottom) - belowSpacer;
+        int height = Math.max(0, room);
+        if (Math.abs(height - spacer.getLayoutParams().height) <= 1) return;
+        spacer.getLayoutParams().height = height;
+        spacer.requestLayout();
     }
 
     private View findTile(String pkg) {

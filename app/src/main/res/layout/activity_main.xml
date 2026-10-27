@@ -139,10 +139,18 @@
                 android:scrollbars="none">
 
                 <LinearLayout
+                    android:id="@+id/content"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clipChildren="false"
                     android:orientation="vertical">
+
+                    <!-- Breathing room: sized by MainActivity.fitSpacer so the favourites sit at the bottom of the first
+                         screen and the top half is left to the clock and the glow, as in the original launcher. -->
+                    <Space
+                        android:id="@+id/spacer"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp" />
 
                     <!-- The focused app's name, large, like the original launcher's hero line. -->
                     <TextView
