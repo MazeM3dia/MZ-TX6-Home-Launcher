@@ -46,13 +46,18 @@ final class AppLoader {
             apps.add(new AppEntry(new ComponentName(activity.packageName, activity.name),
                     String.valueOf(info.loadLabel(pm)), banner, icon, glowOf(banner != null ? banner : icon)));
         }
-        Collator collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
-        apps.sort((a, b) -> collator.compare(a.label, b.label));
+        sort(apps);
         return apps;
     }
 
-    private static int glowOf(Drawable artwork) {
+    /** A to Z by name, the way people read it: case and accents don't split the order. */
+    static void sort(List<AppEntry> apps) {
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        apps.sort((a, b) -> collator.compare(a.label, b.label));
+    }
+
+    static int glowOf(Drawable artwork) {
         Bitmap sample = Bitmap.createBitmap(SAMPLE_WIDTH, SAMPLE_HEIGHT, Bitmap.Config.ARGB_8888);
         Rect bounds = artwork.copyBounds();
         artwork.setBounds(0, 0, SAMPLE_WIDTH, SAMPLE_HEIGHT);

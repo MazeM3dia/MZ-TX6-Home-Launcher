@@ -283,6 +283,10 @@ public final class MainActivity extends Activity {
         Context app = getApplicationContext();
         loader.execute(() -> {
             List<AppEntry> apps = AppLoader.load(app);
+            if (DemoApps.AVAILABLE && prefs.demoApps()) {
+                apps.addAll(DemoApps.make(app));
+                AppLoader.sort(apps);
+            }
             main.post(() -> {
                 if (load != generation || isDestroyed()) return;
                 installed = apps;
@@ -523,6 +527,13 @@ public final class MainActivity extends Activity {
         actions.add(this::resetOrder);
         items.add(getString(R.string.default_home));
         actions.add(this::chooseDefaultHome);
+        if (DemoApps.AVAILABLE) {
+            items.add(DemoApps.menuLabel(prefs.demoApps()));
+            actions.add(() -> {
+                prefs.setDemoApps(!prefs.demoApps());
+                loadApps();
+            });
+        }
         showDialog(new AlertDialog.Builder(this, R.style.Dialog)
                 .setTitle(R.string.customize)
                 .setItems(items.toArray(new String[0]), (d, which) -> actions.get(which).run()));

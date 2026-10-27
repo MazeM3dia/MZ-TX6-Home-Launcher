@@ -47,6 +47,8 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - Home on the emulator: Google's TV launcher declares HOME priority 2, so `cmd package set-home-activity` is
   ignored. To test as Home: `pm disable-user --user 0 com.google.android.tvlauncher`; undo with
   `pm enable com.google.android.tvlauncher`
+- Many apps: the debug build (what Android Studio runs) has Customize > Demo apps, 40 fake tiles from
+  `src/debug/.../DemoApps.java`; `src/release` has an empty twin, so the release APK carries none of it
 - No internet: point `captive_portal_http(s)_url` (settings global) at `127.0.0.1:9`, toggle Wi-Fi; then
   `settings delete` both and toggle again
 
