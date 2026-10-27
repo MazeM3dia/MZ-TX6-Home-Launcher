@@ -1,0 +1,13 @@
+# LF in the repository and in every checkout, whatever core.autocrlf says: gradlew needs LF to run on
+# Linux, macOS, WSL and Git Bash.
+* text=auto eol=lf
+
+# cmd.exe batch files need CRLF.
+*.bat text eol=crlf
+
+# Binary files: no line-ending conversion, no textual diff.
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.jar  binary
+*.apk  binary
