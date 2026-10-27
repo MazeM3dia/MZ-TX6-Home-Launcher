@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The owner's choices: app order, favourites, hidden apps, theme, apps per row, animations and the app to open
- * on start. Packages are stored one per line.
+ * The owner's choices: app order, favourites, hidden apps, theme, apps per row, animations, glow, button
+ * labels and the app to open on start. Packages are stored one per line.
  */
 final class HomePrefs {
     private static final String ORDER = "order";
@@ -22,6 +22,8 @@ final class HomePrefs {
     private static final String ANIMATIONS = "animations";
     private static final String OPEN_ON_START = "open_on_start";
     private static final String OPENED_ON_BOOT = "opened_on_boot";
+    private static final String GLOW = "glow";
+    private static final String BUTTON_LABELS = "button_labels";
 
     private final SharedPreferences prefs;
 
@@ -56,6 +58,16 @@ final class HomePrefs {
     boolean animations() { return prefs.getBoolean(ANIMATIONS, true); }
 
     void setAnimations(boolean on) { prefs.edit().putBoolean(ANIMATIONS, on).apply(); }
+
+    /** The background glow in the focused app's colour. */
+    boolean glow() { return prefs.getBoolean(GLOW, true); }
+
+    void setGlow(boolean on) { prefs.edit().putBoolean(GLOW, on).apply(); }
+
+    /** Text on the top buttons; off, they are round icons. */
+    boolean buttonLabels() { return prefs.getBoolean(BUTTON_LABELS, true); }
+
+    void setButtonLabels(boolean on) { prefs.edit().putBoolean(BUTTON_LABELS, on).apply(); }
 
     /** The app opened once after the box starts; empty for none. */
     String openOnStart() { return prefs.getString(OPEN_ON_START, ""); }

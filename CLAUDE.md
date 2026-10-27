@@ -20,7 +20,14 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   its app once per boot (Settings.Global.BOOT_COUNT, else boot time in minutes)
 - `AppLoader`: finds LAUNCHER and LEANBACK_LAUNCHER apps; `AppEntry`: one tile
 - `Arrangement`: order and move logic on package names, unit-tested in `app/src/test`
-- `HomePrefs`: owner's choices in SharedPreferences; `Palette`: 5 colour themes drawn in code
+- `HomePrefs`: owner's choices in SharedPreferences; `Palette`: 5 colour themes, see-through pills and the
+  favourites band, all drawn in code (no images, no blur)
+- Look (after the original launcher's default theme): greeting, thin clock, divider, spaced capital date;
+  hero line with the focused app's name; favourites in a band without names; names under the focused grid
+  tile only; radial glow in the focused app's colour (`GlowColor`, picked from a 32x18 sample of its artwork
+  at load; Customize can switch it off); Button labels off gives round icon buttons
+- Type: every text uses `Font.Display` (clock, hero), `Font.Text` or `Font.Medium` in res/values/themes.xml,
+  so the typeface changes in one place
 - `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
   between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)

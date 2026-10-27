@@ -31,8 +31,10 @@
             android:visibility="gone" />
     </FrameLayout>
 
+    <!-- Shown under the focused tile only, and not at all in the favourites band (the hero line names it). -->
     <TextView
         android:id="@+id/label"
+        style="@style/Font.Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"

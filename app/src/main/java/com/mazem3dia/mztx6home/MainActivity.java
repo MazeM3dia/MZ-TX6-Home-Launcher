@@ -1,5 +1,7 @@
 package com.mazem3dia.mztx6home;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -9,12 +11,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +31,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +47,10 @@ import java.util.concurrent.Executors;
 public final class MainActivity extends Activity {
     private static final float FOCUS_SCALE = 1.08f;
     private static final int FOCUS_MS = 120;
+    private static final int GLOW_MS = 400;
+    /** Glow opacity at its centre and halfway out, of 255. */
+    private static final int GLOW_STRONG = 0x73;
+    private static final int GLOW_SOFT = 0x26;
     /** Disabling a batch of apps over ADB sends one broadcast each: wait for the last before reloading. */
     private static final int RELOAD_DELAY_MS = 500;
 
@@ -52,12 +63,21 @@ public final class MainActivity extends Activity {
     private ScrollView scroll;
     private GridLayout dock;
     private GridLayout grid;
-    private View dockHeader;
+    private View dockBand;
+    private TextView hero;
+    private TextView greeting;
+    private View amPm;
+    /** The background glow in the focused app's colour; null with Colour glow off. */
+    private GradientDrawable glow;
+    private ValueAnimator glowFade;
+    private int glowColor = GlowColor.NONE;
     private View settings;
     private TextView empty;
     private int columns;
     private int gap;
     private int tileWidth;
+    /** Favourites sit inside the band's padding, so their tiles are a little narrower. */
+    private int dockTileWidth;
     private boolean animations;
     /** The app last opened from a tile, or null after Settings or App info: Home comes back to it. */
     private String lastLaunched;
@@ -96,25 +116,41 @@ public final class MainActivity extends Activity {
         scroll = findViewById(R.id.scroll);
         dock = findViewById(R.id.dock);
         grid = findViewById(R.id.grid);
-        dockHeader = findViewById(R.id.dock_header);
+        dockBand = findViewById(R.id.dock_band);
+        hero = findViewById(R.id.hero);
+        greeting = findViewById(R.id.greeting);
+        amPm = findViewById(R.id.am_pm);
         settings = findViewById(R.id.settings);
         empty = findViewById(R.id.empty);
-        View customize = findViewById(R.id.customize);
-        network = new NetworkStatus(this, findViewById(R.id.network));
+        TextView customize = findViewById(R.id.customize);
+        TextView networkPill = findViewById(R.id.network);
+        network = new NetworkStatus(this, networkPill, !prefs.buttonLabels());
 
         // Tiles fill the row at any density: the width comes from the screen, not a fixed size.
         columns = prefs.columns(getResources().getInteger(R.integer.columns));
         gap = px(R.dimen.tile_gap);
         int screen = getResources().getDisplayMetrics().widthPixels;
-        tileWidth = (screen - 2 * px(R.dimen.safe_horizontal) - (columns - 1) * gap) / columns;
+        int row = screen - 2 * px(R.dimen.safe_horizontal);
+        tileWidth = (row - (columns - 1) * gap) / columns;
+        dockTileWidth = (row - 2 * px(R.dimen.band_padding) - (columns - 1) * gap) / columns;
         dock.setColumnCount(columns);
         grid.setColumnCount(columns);
 
         customize.setBackground(palette.button());
         settings.setBackground(palette.button());
+        networkPill.setBackground(palette.pill());
+        dockBand.setBackground(palette.band());
         customize.setOnClickListener(v -> showCustomize());
         settings.setOnClickListener(v -> openSettings());
+        if (!prefs.buttonLabels()) iconOnly(customize, (TextView) settings, networkPill);
         setAnimations(prefs.animations());
+        if (prefs.glow()) setUpGlow();
+        // The greeting changes with the hour; the clock's own minute tick keeps it current, no timer needed.
+        ((TextView) findViewById(R.id.clock)).addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override public void afterTextChanged(Editable s) { updateGreeting(); }
+        });
 
         // Installs, removals, and apps disabled or enabled over ADB all change the grid.
         IntentFilter filter = new IntentFilter();
@@ -131,6 +167,8 @@ public final class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         network.start();
+        amPm.setVisibility(DateFormat.is24HourFormat(this) ? View.GONE : View.VISIBLE);
+        updateGreeting();
         if (tilesDropped) {
             tilesDropped = false;
             loadApps();
@@ -285,8 +323,7 @@ public final class MainActivity extends Activity {
         fill(dock, dockApps);
         fill(grid, gridApps);
         int dockVisibility = dockApps.isEmpty() ? View.GONE : View.VISIBLE;
-        dockHeader.setVisibility(dockVisibility);
-        dock.setVisibility(dockVisibility);
+        dockBand.setVisibility(dockVisibility);
         empty.setVisibility(dockApps.isEmpty() && gridApps.isEmpty() ? View.VISIBLE : View.GONE);
 
         if (!focusTiles) return;
@@ -301,21 +338,26 @@ public final class MainActivity extends Activity {
     private void fill(GridLayout target, List<AppEntry> apps) {
         target.removeAllViews();
         LayoutInflater inflater = getLayoutInflater();
+        boolean inDock = target == dock;
+        int width = inDock ? dockTileWidth : tileWidth;
         for (int i = 0; i < apps.size(); i++) {
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = tileWidth;
+            params.width = width;
             params.setMarginEnd(i % columns == columns - 1 ? 0 : gap);
-            params.bottomMargin = gap;
-            View tile = newTile(inflater, target);
+            params.bottomMargin = inDock ? 0 : gap;   // favourites are one row, the band pads it
+            View tile = newTile(inflater, target, width);
             bind(tile, apps.get(i));
             target.addView(tile, params);
         }
     }
 
-    private View newTile(LayoutInflater inflater, GridLayout parent) {
+    private View newTile(LayoutInflater inflater, GridLayout parent, int width) {
         View tile = inflater.inflate(R.layout.tile, parent, false);
         View card = tile.findViewById(R.id.card);
-        card.getLayoutParams().height = tileWidth * 9 / 16;
+        card.getLayoutParams().height = width * 9 / 16;
+        // Names under the focused tile only; in the favourites band never, the hero line names it.
+        View label = tile.findViewById(R.id.label);
+        label.setVisibility(parent == dock ? View.GONE : View.INVISIBLE);
         card.setBackground(palette.card());
         card.setForeground(palette.ring());
         card.setClipToOutline(true);   // rounds a banner's corners to the card's
@@ -326,6 +368,12 @@ public final class MainActivity extends Activity {
         // translationZ draws the grown tile above its neighbours; no outline means no shadow to render.
         tile.setOutlineProvider(null);
         tile.setOnFocusChangeListener((v, hasFocus) -> {
+            if (label.getVisibility() != View.GONE) label.setVisibility(hasFocus ? View.VISIBLE : View.INVISIBLE);
+            if (hasFocus) {
+                AppEntry app = (AppEntry) v.getTag();
+                hero.setText(app.label);
+                showGlow(app.glow);
+            }
             float scale = hasFocus ? FOCUS_SCALE : 1f;
             v.setTranslationZ(hasFocus ? 1f : 0f);
             if (animations) {
@@ -461,6 +509,16 @@ public final class MainActivity extends Activity {
         actions.add(this::showOpenOnStart);
         items.add(hiddenCount > 0 ? getString(R.string.hidden_apps_count, hiddenCount) : getString(R.string.hidden_apps));
         actions.add(this::showHidden);
+        items.add(getString(prefs.glow() ? R.string.glow_on : R.string.glow_off));
+        actions.add(() -> {
+            prefs.setGlow(!prefs.glow());
+            recreate();
+        });
+        items.add(getString(prefs.buttonLabels() ? R.string.button_labels_on : R.string.button_labels_off));
+        actions.add(() -> {
+            prefs.setButtonLabels(!prefs.buttonLabels());
+            recreate();
+        });
         items.add(getString(R.string.reset_order));
         actions.add(this::resetOrder);
         items.add(getString(R.string.default_home));
@@ -468,6 +526,68 @@ public final class MainActivity extends Activity {
         showDialog(new AlertDialog.Builder(this, R.style.Dialog)
                 .setTitle(R.string.customize)
                 .setItems(items.toArray(new String[0]), (d, which) -> actions.get(which).run()));
+    }
+
+    // ----- Look: glow, greeting, icon-only buttons -----
+
+    /** A wide radial glow behind everything, centred over the hero line, in the focused app's colour. */
+    private void setUpGlow() {
+        glow = new GradientDrawable();
+        glow.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        glow.setGradientCenter(0.3f, 0.35f);
+        glow.setGradientRadius(getResources().getDisplayMetrics().widthPixels * 0.6f);
+        glow.setColors(glowStops(GlowColor.NONE, 0));
+        findViewById(R.id.glow).setBackground(glow);
+    }
+
+    /** Fades the glow to {@code color} (GlowColor.NONE fades it out); at once with animations off. */
+    private void showGlow(int color) {
+        if (glow == null || color == glowColor) return;
+        int[] from = glowStops(glowColor, color);
+        int[] to = glowStops(color, glowColor);
+        glowColor = color;
+        if (glowFade != null) glowFade.cancel();
+        if (!animations) {
+            glow.setColors(to);
+            return;
+        }
+        ArgbEvaluator blend = new ArgbEvaluator();
+        int[] stops = new int[to.length];
+        glowFade = ValueAnimator.ofFloat(0f, 1f).setDuration(GLOW_MS);
+        glowFade.addUpdateListener(animation -> {
+            for (int i = 0; i < stops.length; i++)
+                stops[i] = (int) blend.evaluate(animation.getAnimatedFraction(), from[i], to[i]);
+            glow.setColors(stops);
+        });
+        glowFade.start();
+    }
+
+    /**
+     * The gradient's colours from the centre out. No glow is drawn as {@code other}'s hue at zero opacity, so a
+     * fade in or out changes only the strength, never passes through grey.
+     */
+    private static int[] glowStops(int color, int other) {
+        boolean none = color == GlowColor.NONE;
+        int rgb = (none ? other : color) & 0xFFFFFF;
+        return new int[] {(none ? 0 : GLOW_STRONG) << 24 | rgb, (none ? 0 : GLOW_SOFT) << 24 | rgb, rgb};
+    }
+
+    private void updateGreeting() {
+        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        greeting.setText(hour < 5 ? R.string.greeting_night : hour < 12 ? R.string.greeting_morning
+                : hour < 17 ? R.string.greeting_afternoon : hour < 22 ? R.string.greeting_evening
+                : R.string.greeting_night);
+    }
+
+    /** Button labels off: round icon buttons; the words stay as what a screen reader says. */
+    private void iconOnly(TextView... buttons) {
+        int pad = px(R.dimen.icon_button_padding);
+        for (TextView button : buttons) {
+            if (button.getText().length() > 0) button.setContentDescription(button.getText());
+            button.setText(null);
+            button.setCompoundDrawablePadding(0);
+            button.setPadding(pad, pad, pad, pad);
+        }
     }
 
     private void showColumns() {

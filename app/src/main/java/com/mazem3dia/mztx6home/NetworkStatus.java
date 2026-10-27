@@ -16,11 +16,16 @@ import android.widget.TextView;
 final class NetworkStatus extends ConnectivityManager.NetworkCallback {
     private final ConnectivityManager connectivity;
     private final TextView label;
+    /** Button labels off: the icon alone while all is well; No internet and Offline keep their words. */
+    private final boolean iconOnly;
+    private final int padding;
     private final Handler main = new Handler(Looper.getMainLooper());
 
-    NetworkStatus(Context context, TextView label) {
+    NetworkStatus(Context context, TextView label, boolean iconOnly) {
         this.connectivity = context.getSystemService(ConnectivityManager.class);
         this.label = label;
+        this.iconOnly = iconOnly;
+        this.padding = label.getCompoundDrawablePadding();
     }
 
     void start() {
@@ -67,8 +72,11 @@ final class NetworkStatus extends ConnectivityManager.NetworkCallback {
                 color = R.color.no_internet;
             }
         }
-        label.setText(text);
+        boolean words = !iconOnly || color != R.color.text_secondary || icon == 0;
+        label.setText(words ? label.getContext().getString(text) : null);
+        label.setContentDescription(label.getContext().getString(text));
         label.setTextColor(label.getContext().getColor(color));
         label.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0);
+        label.setCompoundDrawablePadding(words ? padding : 0);
     }
 }

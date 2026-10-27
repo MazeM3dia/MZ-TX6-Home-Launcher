@@ -7,8 +7,20 @@
         <item name="android:windowAnimationStyle">@null</item>
     </style>
 
+    <!-- The three type styles. Every text picks one, so the typeface is set in one place. -->
+    <style name="Font" />
+    <style name="Font.Display">
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+    <style name="Font.Text">
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+    <style name="Font.Medium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
     <!-- Customize and Settings: focusable pills. The background comes from Palette.button(). -->
-    <style name="TopButton">
+    <style name="TopButton" parent="Font.Medium">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:clickable">true</item>
@@ -23,12 +35,19 @@
         <item name="android:textSize">@dimen/button_text</item>
     </style>
 
-    <style name="SectionHeader">
+    <style name="SectionHeader" parent="Font.Medium">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginBottom">12dp</item>
         <item name="android:textColor">@color/text_secondary</item>
         <item name="android:textSize">@dimen/section_text</item>
+    </style>
+
+    <!-- Greeting and date: small spaced capitals. -->
+    <style name="Caps" parent="Font.Medium">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.18</item>
+        <item name="android:textColor">@color/text_secondary</item>
     </style>
 
     <!-- Tile menu and Customize dialogs: the platform's dark dialog, which the D-pad already drives. -->

@@ -5,6 +5,7 @@
     <color name="background_bottom">#FF0D1117</color>
     <color name="text_primary">#FFFFFFFF</color>
     <color name="text_secondary">#FFAAB4C3</color>
+    <color name="divider">#4DFFFFFF</color>
     <!-- Network label: orange while connected without internet, red while offline. -->
     <color name="no_internet">#FFFFB74D</color>
     <color name="offline">#FFEF5350</color>

@@ -15,6 +15,13 @@ final class Palette {
     private static final int RING = 0xFFFFFFFF;
     /** The ring of a tile being moved. */
     private static final int MOVING = 0xFFFFC107;
+    /** Pills and band are see-through over every palette: white or black at low opacity, a hairline border. */
+    private static final float PILL = 1000f;
+    private static final int PILL_FILL = 0x1FFFFFFF;
+    private static final int PILL_FOCUSED = 0x4DFFFFFF;
+    private static final int PILL_BORDER = 0x33FFFFFF;
+    private static final int BAND_FILL = 0x66000000;
+    private static final int BAND_BORDER = 0x1AFFFFFF;
     /** Background top, background bottom, tile, focused tile. Names: R.array.palette_names, same order. */
     private static final int[][] COLORS = {
             {0xFF1B2330, 0xFF0D1117, 0xFF263040, 0xFF34425A},   // Midnight
@@ -26,14 +33,18 @@ final class Palette {
 
     private final int[] colors;
     private final float radius;
+    private final float bandRadius;
     private final int ring;
     private final int movingRing;
+    private final int hairline;
 
     Palette(Resources res, int index) {
         colors = COLORS[index >= 0 && index < COLORS.length ? index : 0];
         radius = res.getDimension(R.dimen.tile_radius);
+        bandRadius = res.getDimension(R.dimen.band_radius);
         ring = res.getDimensionPixelSize(R.dimen.focus_ring);
         movingRing = res.getDimensionPixelSize(R.dimen.move_ring);
+        hairline = Math.max(1, Math.round(res.getDisplayMetrics().density));
     }
 
     static int count() { return COLORS.length; }
@@ -59,13 +70,25 @@ final class Palette {
         return frame;
     }
 
-    /** A pill button at the top: lighter, with a ring, while focused. */
+    /**
+     * A pill button at the top: see-through white with a hairline border, brighter with a ring while focused.
+     * Transparency, not blur, so the background shows through at no cost to the GPU.
+     */
     Drawable button() {
-        float pill = 1000f;
         StateListDrawable button = new StateListDrawable();
-        button.addState(new int[] {android.R.attr.state_focused}, shape(colors[3], ring, RING, pill));
-        button.addState(StateSet.WILD_CARD, shape(colors[2], 0, 0, pill));
+        button.addState(new int[] {android.R.attr.state_focused}, shape(PILL_FOCUSED, ring, RING, PILL));
+        button.addState(StateSet.WILD_CARD, pill());
         return button;
+    }
+
+    /** The network pill: a button's look, but never focused. */
+    Drawable pill() {
+        return shape(PILL_FILL, hairline, PILL_BORDER, PILL);
+    }
+
+    /** The dark rounded band behind the favourites row. */
+    Drawable band() {
+        return shape(BAND_FILL, hairline, BAND_BORDER, bandRadius);
     }
 
     private static GradientDrawable shape(int fill, int strokeWidth, int strokeColor, float corner) {

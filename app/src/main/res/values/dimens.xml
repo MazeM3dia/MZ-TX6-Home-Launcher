@@ -11,10 +11,18 @@
     <dimen name="focus_ring">3dp</dimen>
     <dimen name="tile_icon">72dp</dimen>
     <dimen name="tile_label">16sp</dimen>
-    <dimen name="clock">56sp</dimen>
-    <dimen name="date">20sp</dimen>
+    <dimen name="clock">72sp</dimen>
+    <dimen name="clock_suffix">20sp</dimen>
+    <dimen name="date">18sp</dimen>
+    <dimen name="greeting">14sp</dimen>
+    <dimen name="hero">48sp</dimen>
     <dimen name="button_text">18sp</dimen>
     <dimen name="section_text">18sp</dimen>
+    <!-- Favourites band: the dark rounded container around the favourites row. -->
+    <dimen name="band_padding">16dp</dimen>
+    <dimen name="band_radius">24dp</dimen>
+    <!-- Button labels off: round icon buttons. -->
+    <dimen name="icon_button_padding">12dp</dimen>
     <dimen name="hint_text">14sp</dimen>
     <dimen name="move_ring">4dp</dimen>
     <dimen name="dream_clock">96sp</dimen>

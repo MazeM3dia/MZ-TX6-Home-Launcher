@@ -11,12 +11,15 @@ final class AppEntry {
     final Drawable banner;
     /** Loaded only when there is no banner. */
     final Drawable icon;
+    /** The glow colour while this tile has focus, or GlowColor.NONE. */
+    final int glow;
 
-    AppEntry(ComponentName component, String label, Drawable banner, Drawable icon) {
+    AppEntry(ComponentName component, String label, Drawable banner, Drawable icon, int glow) {
         this.component = component;
         this.label = label;
         this.banner = banner;
         this.icon = icon;
+        this.glow = glow;
     }
 
     /** The key for the owner's choices (order, favourites, hidden): one tile per package. */

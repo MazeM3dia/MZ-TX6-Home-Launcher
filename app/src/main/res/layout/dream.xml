@@ -18,6 +18,7 @@
         android:orientation="vertical">
 
         <TextClock
+            style="@style/Font.Display"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:format12Hour="@string/time_12"
@@ -26,6 +27,7 @@
             android:textSize="@dimen/dream_clock" />
 
         <TextClock
+            style="@style/Font.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:format12Hour="@string/date_format"
