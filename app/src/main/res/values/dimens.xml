@@ -22,6 +22,12 @@
          tile grows (4% of its width each side), so the tile never covers the band's edge or corners. -->
     <dimen name="band_padding">28dp</dimen>
     <dimen name="band_radius">20dp</dimen>
+    <!-- The scrolling area starts this far below the header; rows scrolled up are cut off there. -->
+    <dimen name="header_gap">28dp</dimen>
+    <!-- The focused tile, its name included, stays this far from the scrolling area's top and from the screen's
+         bottom edge: about 12% of the TX6's 811 dp height, above a soundbar or anything in front of the TV. -->
+    <dimen name="focus_margin_top">40dp</dimen>
+    <dimen name="focus_margin_bottom">96dp</dimen>
     <!-- Button labels off: round icon buttons. -->
     <dimen name="icon_button_padding">12dp</dimen>
     <dimen name="hint_text">14sp</dimen>

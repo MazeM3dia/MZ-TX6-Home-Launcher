@@ -123,9 +123,10 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="16dp">
+            android:layout_marginTop="@dimen/header_gap">
 
-            <ScrollView
+            <!-- Keeps the focused tile clear of the header and of the screen's bottom edge (focus_margin_*). -->
+            <com.mazem3dia.mztx6home.FocusScrollView
                 android:id="@+id/scroll"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -204,7 +205,7 @@
                         android:orientation="horizontal"
                         android:useDefaultMargins="false" />
                 </LinearLayout>
-            </ScrollView>
+            </com.mazem3dia.mztx6home.FocusScrollView>
 
             <TextView
                 android:id="@+id/empty"
