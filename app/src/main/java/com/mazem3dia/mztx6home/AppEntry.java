@@ -18,4 +18,9 @@ final class AppEntry {
         this.banner = banner;
         this.icon = icon;
     }
+
+    /** The key for the owner's choices (order, favourites, hidden): one tile per package. */
+    String packageName() {
+        return component.getPackageName();
+    }
 }

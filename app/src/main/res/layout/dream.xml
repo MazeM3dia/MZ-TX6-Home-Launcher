@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Screensaver. ClockDream moves the clock to a new place every minute so no pixel stays lit. The frame is
+     the area the clock moves in (UselessParent), and a dream window doesn't use the app theme's background
+     (Overdraw). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/dream_root"
+    tools:ignore="Overdraw,UselessParent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <LinearLayout
+        android:id="@+id/dream_clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format12Hour="@string/time_12"
+            android:format24Hour="@string/time_24"
+            android:textColor="@color/dream_text"
+            android:textSize="@dimen/dream_clock" />
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format12Hour="@string/date_format"
+            android:format24Hour="@string/date_format"
+            android:textColor="@color/dream_text"
+            android:textSize="@dimen/dream_date" />
+    </LinearLayout>
+</FrameLayout>

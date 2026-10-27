@@ -31,4 +31,8 @@ android {
     }
 }
 
-// No dependencies on purpose: the Android framework alone covers the grid, clock and focus.
+// No app dependencies on purpose: the Android framework alone covers the grid, clock and focus.
+dependencies {
+    // Test only, never in the APK: plain JVM tests for Arrangement, src/test.
+    testImplementation 'junit:junit:4.13.2'
+}

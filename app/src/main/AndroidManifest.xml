@@ -5,6 +5,10 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
+    <!-- The Wi-Fi / Ethernet / Offline label reads the network state. Not INTERNET: the launcher never
+         connects to anything. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Android 11+ package visibility (newer boxes, the API 34 emulator): the apps shown as tiles and the
          Settings app. Android 9 on the TX6 ignores this. -->
     <queries>
@@ -49,5 +53,18 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Screensaver: pick "MZ TX6 Clock" in Settings > Screen saver. Started by Android only when the box
+             is idle, never by the launcher. -->
+        <service
+            android:name=".ClockDream"
+            android:exported="true"
+            android:label="@string/dream_name"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

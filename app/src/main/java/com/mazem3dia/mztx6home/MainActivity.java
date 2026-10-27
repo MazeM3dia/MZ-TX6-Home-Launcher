@@ -1,16 +1,19 @@
 package com.mazem3dia.mztx6home;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.GridLayout;
@@ -19,11 +22,18 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** The home screen: clock, date, a Settings button and a grid of every app on the box. */
+/**
+ * The home screen: clock, date, network, the Customize and Settings buttons, a Favourites row and a grid of
+ * every other app. Hold OK (or press Menu) on a tile for its menu: Move, favourite, Hide, App info.
+ */
 public final class MainActivity extends Activity {
     private static final float FOCUS_SCALE = 1.08f;
     private static final int FOCUS_MS = 120;
@@ -33,10 +43,28 @@ public final class MainActivity extends Activity {
     private final ExecutorService loader = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable reload = this::loadApps;
+    private HomePrefs prefs;
+    private Palette palette;
+    private NetworkStatus network;
     private ScrollView scroll;
+    private GridLayout dock;
     private GridLayout grid;
+    private View dockHeader;
     private View settings;
     private TextView empty;
+    private int columns;
+    private int gap;
+    private int tileWidth;
+    /** Every app on the box, A to Z, from the last load; null after onTrimMemory. */
+    private List<AppEntry> installed;
+    /** What the Favourites row and the Apps grid show, tile for tile. */
+    private final List<AppEntry> dockApps = new ArrayList<>();
+    private final List<AppEntry> gridApps = new ArrayList<>();
+    /** The tile being moved with the D-pad, or null. */
+    private View moving;
+    /** OK has been held on a tile: its menu opens when OK is let go. */
+    private boolean menuOnRelease;
+    private Dialog dialog;
     /** Bumped on every load, so an older load that finishes late never replaces a newer one. */
     private int generation;
     /** onTrimMemory dropped the tiles; the next onStart builds them again. */
@@ -53,12 +81,30 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        prefs = new HomePrefs(this);
+        palette = new Palette(getResources(), prefs.palette());
+        getWindow().setBackgroundDrawable(palette.window());
         setContentView(R.layout.activity_main);
         scroll = findViewById(R.id.scroll);
+        dock = findViewById(R.id.dock);
         grid = findViewById(R.id.grid);
+        dockHeader = findViewById(R.id.dock_header);
         settings = findViewById(R.id.settings);
         empty = findViewById(R.id.empty);
-        grid.setColumnCount(getResources().getInteger(R.integer.columns));
+        View customize = findViewById(R.id.customize);
+        network = new NetworkStatus(this, findViewById(R.id.network));
+
+        // Tiles fill the row at any density: the width comes from the screen, not a fixed size.
+        columns = getResources().getInteger(R.integer.columns);
+        gap = px(R.dimen.tile_gap);
+        int screen = getResources().getDisplayMetrics().widthPixels;
+        tileWidth = (screen - 2 * px(R.dimen.safe_horizontal) - (columns - 1) * gap) / columns;
+        dock.setColumnCount(columns);
+        grid.setColumnCount(columns);
+
+        customize.setBackground(palette.button());
+        settings.setBackground(palette.button());
+        customize.setOnClickListener(v -> showCustomize());
         settings.setOnClickListener(v -> openSettings());
 
         // Installs, removals, and apps disabled or enabled over ADB all change the grid.
@@ -74,6 +120,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        network.start();
         if (tilesDropped) {
             tilesDropped = false;
             loadApps();
@@ -81,9 +128,18 @@ public final class MainActivity extends Activity {
     }
 
     @Override
+    protected void onStop() {
+        endMove();
+        network.stop();
+        super.onStop();
+    }
+
+    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        // The Home button: back to the top of the grid and the first app.
+        // The Home button: close any menu, finish a move, back to the top and the first app.
+        endMove();
+        dismissDialog();
         scroll.scrollTo(0, 0);
         focusFirstTile();
     }
@@ -99,8 +155,12 @@ public final class MainActivity extends Activity {
         super.onTrimMemory(level);
         // MODERATE and above arrive only while Home is out of sight and the box is short of memory:
         // give back the icons and banners, and build them again when Home comes back.
-        if (level >= TRIM_MEMORY_MODERATE && grid.getChildCount() > 0) {
+        if (level >= TRIM_MEMORY_MODERATE && installed != null) {
             generation++;
+            installed = null;
+            dockApps.clear();
+            gridApps.clear();
+            dock.removeAllViews();
             grid.removeAllViews();
             tilesDropped = true;
         }
@@ -108,11 +168,53 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        dismissDialog();
         unregisterReceiver(packagesChanged);
         main.removeCallbacksAndMessages(null);
         loader.shutdownNow();
         super.onDestroy();
     }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int code = event.getKeyCode();
+        if (moving != null && !isVolumeKey(code)) {
+            // Move mode takes every key: arrows move the tile, OK or Back puts it down.
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (code == KeyEvent.KEYCODE_DPAD_LEFT) step(-1, 0);
+                else if (code == KeyEvent.KEYCODE_DPAD_RIGHT) step(1, 0);
+                else if (code == KeyEvent.KEYCODE_DPAD_UP) step(0, -1);
+                else if (code == KeyEvent.KEYCODE_DPAD_DOWN) step(0, 1);
+            } else if (event.getAction() == KeyEvent.ACTION_UP && (isOkKey(code)
+                    || code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_ESCAPE)) {
+                endMove();
+            }
+            return true;
+        }
+        // The tile menu: Menu, or OK held for half a second (when it starts repeating) and let go. The menu
+        // opens on the release: a dialog shown while a key is still down never gets key focus on Android 9.
+        View focused = getCurrentFocus();
+        boolean onTile = focused != null && focused.getTag() instanceof AppEntry;
+        if (isOkKey(code) && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() > 0) {
+            if (event.getRepeatCount() == 1 && onTile) menuOnRelease = true;
+            if (menuOnRelease) return true;
+        }
+        if (isOkKey(code) && event.getAction() == KeyEvent.ACTION_UP && menuOnRelease) {
+            menuOnRelease = false;
+            if (onTile) {
+                focused.setPressed(false);   // the tile never sees this release, so it would not open the app
+                showTileMenu(focused);
+            }
+            return true;
+        }
+        if (code == KeyEvent.KEYCODE_MENU && event.getAction() == KeyEvent.ACTION_UP && onTile) {
+            showTileMenu(focused);
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    // ----- Loading and laying out the tiles -----
 
     private void loadApps() {
         int load = ++generation;
@@ -120,55 +222,82 @@ public final class MainActivity extends Activity {
         loader.execute(() -> {
             List<AppEntry> apps = AppLoader.load(app);
             main.post(() -> {
-                if (load == generation && !isDestroyed()) showApps(apps);
+                if (load != generation || isDestroyed()) return;
+                installed = apps;
+                arrange();
             });
         });
     }
 
-    private void showApps(List<AppEntry> apps) {
-        // Keep focus on the same app across a reload; leave it alone if it was on the Settings button.
-        // With no tiles yet (first start, or after onTrimMemory) Android has put focus on Settings itself,
+    /** Splits the installed apps into Favourites and Apps by the owner's choices, and shows them. */
+    private void arrange() {
+        // Keep focus on the same app, or failing that the same place; leave it alone on the top buttons.
+        // With no tiles yet (first start, or after onTrimMemory) Android has put focus on a button itself,
         // so the first app takes it.
         View focused = getCurrentFocus();
-        ComponentName keep = focused != null && focused.getTag() instanceof AppEntry
-                ? ((AppEntry) focused.getTag()).component : null;
-        boolean focusTiles = grid.getChildCount() == 0 || focused == null || keep != null;
+        boolean onTile = focused != null && focused.getTag() instanceof AppEntry;
+        String keep = onTile ? ((AppEntry) focused.getTag()).packageName() : null;
+        GridLayout keepGrid = onTile ? (GridLayout) focused.getParent() : null;
+        int keepIndex = onTile ? keepGrid.indexOfChild(focused) : 0;
+        boolean focusTiles = dock.getChildCount() + grid.getChildCount() == 0 || focused == null || onTile;
 
-        grid.removeAllViews();
-        int columns = grid.getColumnCount();
-        int gap = px(R.dimen.tile_gap);
-        int screen = getResources().getDisplayMetrics().widthPixels;
-        int width = (screen - 2 * px(R.dimen.safe_horizontal) - (columns - 1) * gap) / columns;
-        LayoutInflater inflater = getLayoutInflater();
-        View restore = null;
-        for (int i = 0; i < apps.size(); i++) {
-            AppEntry app = apps.get(i);
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = width;
-            params.setMarginEnd(i % columns == columns - 1 ? 0 : gap);
-            params.bottomMargin = gap;
-            View tile = makeTile(inflater, app, width);
-            grid.addView(tile, params);
-            if (app.component.equals(keep)) restore = tile;
+        Map<String, AppEntry> byPackage = new LinkedHashMap<>();
+        for (AppEntry app : installed) byPackage.put(app.packageName(), app);
+        Set<String> hidden = prefs.hidden();
+        dockApps.clear();
+        List<String> docked = new ArrayList<>();
+        for (String pkg : prefs.dock()) {
+            AppEntry app = byPackage.get(pkg);
+            if (app == null || hidden.contains(pkg) || dockApps.size() == columns) continue;
+            dockApps.add(app);
+            docked.add(pkg);
         }
-        empty.setVisibility(apps.isEmpty() ? View.VISIBLE : View.GONE);
+        List<String> rest = new ArrayList<>();
+        for (String pkg : byPackage.keySet())
+            if (!hidden.contains(pkg) && !docked.contains(pkg)) rest.add(pkg);
+        gridApps.clear();
+        for (String pkg : Arrangement.order(rest, prefs.order())) gridApps.add(byPackage.get(pkg));
+
+        fill(dock, dockApps);
+        fill(grid, gridApps);
+        int dockVisibility = dockApps.isEmpty() ? View.GONE : View.VISIBLE;
+        dockHeader.setVisibility(dockVisibility);
+        dock.setVisibility(dockVisibility);
+        empty.setVisibility(dockApps.isEmpty() && gridApps.isEmpty() ? View.VISIBLE : View.GONE);
+
         if (!focusTiles) return;
+        View restore = keep != null ? findTile(keep) : null;
+        if (restore == null && keepGrid != null && keepGrid.getChildCount() > 0)
+            restore = keepGrid.getChildAt(Math.min(keepIndex, keepGrid.getChildCount() - 1));
         if (restore != null) restore.requestFocus();
         else focusFirstTile();
     }
 
-    private View makeTile(LayoutInflater inflater, AppEntry app, int width) {
-        View tile = inflater.inflate(R.layout.tile, grid, false);
+    private void fill(GridLayout target, List<AppEntry> apps) {
+        target.removeAllViews();
+        LayoutInflater inflater = getLayoutInflater();
+        for (int i = 0; i < apps.size(); i++) {
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = tileWidth;
+            params.setMarginEnd(i % columns == columns - 1 ? 0 : gap);
+            params.bottomMargin = gap;
+            View tile = newTile(inflater, target);
+            bind(tile, apps.get(i));
+            target.addView(tile, params);
+        }
+    }
+
+    private View newTile(LayoutInflater inflater, GridLayout parent) {
+        View tile = inflater.inflate(R.layout.tile, parent, false);
         View card = tile.findViewById(R.id.card);
-        card.getLayoutParams().height = width * 9 / 16;
+        card.getLayoutParams().height = tileWidth * 9 / 16;
+        card.setBackground(palette.card());
+        card.setForeground(palette.ring());
         card.setClipToOutline(true);   // rounds a banner's corners to the card's
-        ImageView image = tile.findViewById(app.banner != null ? R.id.banner : R.id.icon);
-        image.setImageDrawable(app.banner != null ? app.banner : app.icon);
-        image.setVisibility(View.VISIBLE);
-        ((TextView) tile.findViewById(R.id.label)).setText(app.label);
-        tile.setTag(app);
-        tile.setContentDescription(app.label);
-        tile.setOnClickListener(v -> open(app));
+        // The tag is the app the tile shows now: moving a tile changes it.
+        tile.setOnClickListener(v -> open((AppEntry) v.getTag()));
+        // No long-click listener: holding OK is caught in dispatchKeyEvent, so the menu can open on release.
+        tile.setLongClickable(false);
         // translationZ draws the grown tile above its neighbours; no outline means no shadow to render.
         tile.setOutlineProvider(null);
         tile.setOnFocusChangeListener((v, hasFocus) -> {
@@ -179,27 +308,234 @@ public final class MainActivity extends Activity {
         return tile;
     }
 
+    private static void bind(View tile, AppEntry app) {
+        boolean hasBanner = app.banner != null;
+        ImageView banner = tile.findViewById(R.id.banner);
+        ImageView icon = tile.findViewById(R.id.icon);
+        banner.setImageDrawable(hasBanner ? app.banner : null);
+        banner.setVisibility(hasBanner ? View.VISIBLE : View.GONE);
+        icon.setImageDrawable(hasBanner ? null : app.icon);
+        icon.setVisibility(hasBanner ? View.GONE : View.VISIBLE);
+        ((TextView) tile.findViewById(R.id.label)).setText(app.label);
+        tile.setTag(app);
+        tile.setContentDescription(app.label);
+    }
+
+    private View findTile(String pkg) {
+        for (GridLayout target : new GridLayout[] {dock, grid})
+            for (int i = 0; i < target.getChildCount(); i++)
+                if (((AppEntry) target.getChildAt(i).getTag()).packageName().equals(pkg))
+                    return target.getChildAt(i);
+        return null;
+    }
+
     private void focusFirstTile() {
-        if (grid.getChildCount() > 0) grid.getChildAt(0).requestFocus();
+        if (dock.getChildCount() > 0) dock.getChildAt(0).requestFocus();
+        else if (grid.getChildCount() > 0) grid.getChildAt(0).requestFocus();
         else settings.requestFocus();
     }
+
+    // ----- Tile menu: move, favourite, hide, app info -----
+
+    private void showTileMenu(View tile) {
+        AppEntry app = (AppEntry) tile.getTag();
+        boolean inDock = tile.getParent() == dock;
+        String[] items = {
+                getString(R.string.move),
+                getString(inDock ? R.string.remove_favourite : R.string.add_favourite),
+                getString(R.string.hide),
+                getString(R.string.app_info),
+        };
+        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
+                .setTitle(app.label)
+                .setItems(items, (d, which) -> {
+                    if (which == 0) startMove(tile);
+                    else if (which == 1) setFavourite(app, !inDock);
+                    else if (which == 2) hide(app);
+                    else openAppInfo(app);
+                }));
+    }
+
+    private void startMove(View tile) {
+        moving = tile;
+        moving.setActivated(true);   // amber ring
+        moving.requestFocus();
+        Toast.makeText(this, R.string.move_hint, Toast.LENGTH_SHORT).show();
+    }
+
+    /** One D-pad step in move mode: the tile swaps places along its row or column, within its own section. */
+    private void step(int dx, int dy) {
+        GridLayout target = (GridLayout) moving.getParent();
+        List<AppEntry> apps = target == dock ? dockApps : gridApps;
+        int from = target.indexOfChild(moving);
+        int to = Arrangement.moveTarget(from, apps.size(), columns, dx, dy);
+        if (to == from) return;
+        // The views stay where they are; the apps they show shift by one, and focus follows the moved app.
+        Arrangement.move(apps, from, to);
+        for (int i = Math.min(from, to); i <= Math.max(from, to); i++) bind(target.getChildAt(i), apps.get(i));
+        moving.setActivated(false);
+        moving = target.getChildAt(to);
+        moving.setActivated(true);
+        moving.requestFocus();
+    }
+
+    private void endMove() {
+        if (moving == null) return;
+        boolean inDock = moving.getParent() == dock;
+        moving.setActivated(false);
+        moving = null;
+        if (inDock) prefs.setDock(packages(dockApps));
+        else prefs.setOrder(packages(gridApps));
+    }
+
+    private void setFavourite(AppEntry app, boolean favourite) {
+        List<String> docked = packages(dockApps);
+        if (favourite) {
+            if (docked.size() >= columns) {
+                Toast.makeText(this, getString(R.string.favourites_full, columns), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            docked.add(app.packageName());
+        } else {
+            docked.remove(app.packageName());
+        }
+        prefs.setDock(docked);
+        arrange();
+    }
+
+    private void hide(AppEntry app) {
+        Set<String> hidden = prefs.hidden();
+        hidden.add(app.packageName());
+        prefs.setHidden(hidden);
+        List<String> docked = packages(dockApps);
+        if (docked.remove(app.packageName())) prefs.setDock(docked);
+        arrange();
+    }
+
+    // ----- Customize menu: theme, hidden apps, reset order -----
+
+    private void showCustomize() {
+        if (installed == null) return;   // still loading
+        int hiddenCount = hiddenApps().size();
+        String[] items = {
+                getString(R.string.theme),
+                hiddenCount > 0 ? getString(R.string.hidden_apps_count, hiddenCount) : getString(R.string.hidden_apps),
+                getString(R.string.reset_order),
+        };
+        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
+                .setTitle(R.string.customize)
+                .setItems(items, (d, which) -> {
+                    if (which == 0) showThemes();
+                    else if (which == 1) showHidden();
+                    else resetOrder();
+                }));
+    }
+
+    private void showThemes() {
+        int current = prefs.palette();
+        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
+                .setTitle(R.string.theme)
+                .setSingleChoiceItems(R.array.palette_names, current, (d, which) -> {
+                    d.dismiss();
+                    if (which == current) return;
+                    prefs.setPalette(which);
+                    recreate();   // every drawable is built again from the new palette
+                }));
+    }
+
+    private void showHidden() {
+        List<AppEntry> apps = hiddenApps();
+        if (apps.isEmpty()) {
+            Toast.makeText(this, R.string.no_hidden_apps, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] labels = new String[apps.size()];
+        boolean[] stillHidden = new boolean[apps.size()];
+        for (int i = 0; i < labels.length; i++) {
+            labels[i] = apps.get(i).label;
+            stillHidden[i] = true;
+        }
+        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
+                .setTitle(R.string.hidden_apps_title)
+                .setMultiChoiceItems(labels, stillHidden, (d, which, checked) -> stillHidden[which] = checked)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(android.R.string.ok, (d, which) -> {
+                    Set<String> hidden = prefs.hidden();
+                    for (int i = 0; i < labels.length; i++)
+                        if (!stillHidden[i]) hidden.remove(apps.get(i).packageName());
+                    prefs.setHidden(hidden);
+                    arrange();
+                }));
+    }
+
+    private List<AppEntry> hiddenApps() {
+        Set<String> hidden = prefs.hidden();
+        List<AppEntry> apps = new ArrayList<>();
+        for (AppEntry app : installed)
+            if (hidden.contains(app.packageName())) apps.add(app);
+        return apps;
+    }
+
+    private void resetOrder() {
+        prefs.setOrder(new ArrayList<>());
+        arrange();
+        Toast.makeText(this, R.string.order_reset, Toast.LENGTH_SHORT).show();
+    }
+
+    // ----- Opening things -----
 
     private void open(AppEntry app) {
         Intent intent = Intent.makeMainActivity(app.component)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        try {
-            startActivity(intent);
-        } catch (ActivityNotFoundException | SecurityException e) {
-            Toast.makeText(this, getString(R.string.cannot_open, app.label), Toast.LENGTH_SHORT).show();
-        }
+        start(intent, getString(R.string.cannot_open, app.label));
+    }
+
+    private void openAppInfo(AppEntry app) {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", app.packageName(), null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        start(intent, getString(R.string.cannot_open, getString(R.string.app_info)));
     }
 
     private void openSettings() {
+        start(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                getString(R.string.cannot_open_settings));
+    }
+
+    private void start(Intent intent, String failure) {
         try {
-            startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show();
+            startActivity(intent);
+        } catch (ActivityNotFoundException | SecurityException e) {
+            Toast.makeText(this, failure, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    // ----- Helpers -----
+
+    private void showDialog(AlertDialog.Builder builder) {
+        dismissDialog();
+        dialog = builder.show();
+    }
+
+    private void dismissDialog() {
+        if (dialog != null) dialog.dismiss();
+        dialog = null;
+    }
+
+    private static List<String> packages(List<AppEntry> apps) {
+        List<String> packages = new ArrayList<>(apps.size());
+        for (AppEntry app : apps) packages.add(app.packageName());
+        return packages;
+    }
+
+    /** OK on the remote, Enter on a keyboard (and the emulator). */
+    private static boolean isOkKey(int code) {
+        return code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
+                || code == KeyEvent.KEYCODE_NUMPAD_ENTER;
+    }
+
+    private static boolean isVolumeKey(int code) {
+        return code == KeyEvent.KEYCODE_VOLUME_UP || code == KeyEvent.KEYCODE_VOLUME_DOWN
+                || code == KeyEvent.KEYCODE_VOLUME_MUTE;
     }
 
     private int px(int dimen) {

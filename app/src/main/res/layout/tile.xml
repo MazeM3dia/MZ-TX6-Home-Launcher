@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One app. MainActivity sets the width and the card's 16:9 height, and shows the banner or the icon. -->
+<!-- One app. MainActivity sets the width, the card's 16:9 height and its Palette background and ring, and shows
+     the banner or the icon. The card copies the tile's focused and activated (moving) states. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -11,9 +12,7 @@
         android:id="@+id/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/tile_card"
-        android:duplicateParentState="true"
-        android:foreground="@drawable/tile_ring">
+        android:duplicateParentState="true">
 
         <ImageView
             android:id="@+id/banner"
