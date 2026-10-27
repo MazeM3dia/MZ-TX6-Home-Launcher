@@ -127,10 +127,12 @@ public final class MainActivity extends Activity {
 
     private void showApps(List<AppEntry> apps) {
         // Keep focus on the same app across a reload; leave it alone if it was on the Settings button.
+        // With no tiles yet (first start, or after onTrimMemory) Android has put focus on Settings itself,
+        // so the first app takes it.
         View focused = getCurrentFocus();
         ComponentName keep = focused != null && focused.getTag() instanceof AppEntry
                 ? ((AppEntry) focused.getTag()).component : null;
-        boolean focusTiles = focused == null || keep != null;
+        boolean focusTiles = grid.getChildCount() == 0 || focused == null || keep != null;
 
         grid.removeAllViews();
         int columns = grid.getColumnCount();
