@@ -18,12 +18,12 @@
     <style name="Font.Text">
         <item name="android:fontFamily">@font/inter_display_regular</item>
     </style>
-    <style name="Font.Medium">
-        <item name="android:fontFamily">@font/inter_display_medium</item>
+    <style name="Font.Bold">
+        <item name="android:fontFamily">@font/inter_display_bold</item>
     </style>
 
     <!-- Customize and Settings: focusable pills. The background comes from Palette.button(). -->
-    <style name="TopButton" parent="Font.Medium">
+    <style name="TopButton" parent="Font.Bold">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:clickable">true</item>
@@ -38,7 +38,7 @@
         <item name="android:textSize">@dimen/button_text</item>
     </style>
 
-    <style name="SectionHeader" parent="Font.Medium">
+    <style name="SectionHeader" parent="Font.Bold">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginBottom">12dp</item>
@@ -47,7 +47,7 @@
     </style>
 
     <!-- Greeting and date: small spaced capitals. -->
-    <style name="Caps" parent="Font.Medium">
+    <style name="Caps" parent="Font.Bold">
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.18</item>
         <item name="android:textColor">@color/text_secondary</item>

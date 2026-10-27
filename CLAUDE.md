@@ -32,9 +32,9 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   hero line with the focused app's name; favourites in a band without names; names under the focused grid
   tile only; radial glow in the focused app's colour (`GlowColor`, picked from a 32x18 sample of its artwork
   at load; Customize can switch it off); Button labels off gives round icon buttons
-- Type: Inter Display (Light, Regular, Medium) in res/font, trimmed to Latin with fonttools pyftsubset
+- Type: Inter Display (Light, Regular, Bold) in res/font, trimmed to Latin with fonttools pyftsubset
   (about 51 KB each; licence FONT-LICENSE-OFL.txt). Every text uses `Font.Display` (clock, hero),
-  `Font.Text` or `Font.Medium` in res/values/themes.xml; the clocks use tabular digits (`tnum`).
+  `Font.Text` or `Font.Bold` in res/values/themes.xml; the clocks use tabular digits (`tnum`).
   Originals stay outside the repo in ../inbox/inter
 - `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
   between onStart and onStop

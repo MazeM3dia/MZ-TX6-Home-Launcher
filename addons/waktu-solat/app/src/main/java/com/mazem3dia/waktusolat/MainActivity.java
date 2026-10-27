@@ -39,7 +39,7 @@ public final class MainActivity extends Activity {
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private Typeface light;
-    private Typeface medium;
+    private Typeface bold;
     private int accent;
     private TextView place;
     private TextView next;
@@ -69,7 +69,7 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         light = getResources().getFont(R.font.inter_display_light);
-        medium = getResources().getFont(R.font.inter_display_medium);
+        bold = getResources().getFont(R.font.inter_display_bold);
         accent = getColor(R.color.accent);
 
         FrameLayout root = new FrameLayout(this);
@@ -80,14 +80,14 @@ public final class MainActivity extends Activity {
         column.setPadding(dp(80), dp(48), dp(80), dp(40));
         root.addView(column, new FrameLayout.LayoutParams(-1, -1));
 
-        place = text(18, medium, 0xB3FFFFFF);
+        place = text(18, bold, 0xB3FFFFFF);
         place.setLetterSpacing(0.2f);
         place.setAllCaps(true);
         column.addView(place);
         next = text(52, light, 0xFFFFFFFF);
         next.setPadding(0, dp(10), 0, dp(4));
         column.addView(next);
-        dates = text(20, medium, 0xB3FFFFFF);
+        dates = text(20, bold, 0xB3FFFFFF);
         column.addView(dates);
 
         rows = new LinearLayout(this);
@@ -96,7 +96,7 @@ public final class MainActivity extends Activity {
         rowParams.setMargins(0, dp(36), 0, 0);
         column.addView(rows, rowParams);
 
-        status = text(16, medium, 0x80FFFFFF);
+        status = text(16, bold, 0x80FFFFFF);
         status.setPadding(0, dp(18), 0, 0);
         column.addView(status);
         setContentView(root);
@@ -204,11 +204,11 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(48), dp(48));
         iconParams.bottomMargin = dp(14);
         card.addView(icon, iconParams);
-        TextView name = centered(text(22, medium, fg));
+        TextView name = centered(text(22, bold, fg));
         name.setText(Jakim.NAMES[index]);
         name.setPadding(0, 0, 0, dp(8));
         card.addView(name);
-        TextView time = centered(text(44, highlight ? medium : light, fg));
+        TextView time = centered(text(44, highlight ? bold : light, fg));
         time.setText(Jakim.time(minutes, clock24));
         // Shrink rather than cut "12:45 ptg" on a narrow screen.
         time.setMaxLines(1);
