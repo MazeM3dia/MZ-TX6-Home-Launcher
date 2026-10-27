@@ -23,6 +23,10 @@
         <intent>
             <action android:name="android.settings.SETTINGS" />
         </intent>
+        <!-- Customize > Choose default home: Android's Home settings page, where the box has one. -->
+        <intent>
+            <action android:name="android.settings.HOME_SETTINGS" />
+        </intent>
     </queries>
 
     <application

@@ -8,10 +8,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -32,7 +34,8 @@ import java.util.concurrent.Executors;
 
 /**
  * The home screen: clock, date, network, the Customize and Settings buttons, a Favourites row and a grid of
- * every other app. Hold OK (or press Menu) on a tile for its menu: Move, favourite, Hide, App info.
+ * every other app. Hold OK (or press Menu) on a tile for its menu: Move, favourite, Hide, App info. Customize
+ * holds the theme, apps per row, animations, the app to open on start, hidden apps and the default home.
  */
 public final class MainActivity extends Activity {
     private static final float FOCUS_SCALE = 1.08f;
@@ -55,6 +58,11 @@ public final class MainActivity extends Activity {
     private int columns;
     private int gap;
     private int tileWidth;
+    private boolean animations;
+    /** The app last opened from a tile, or null after Settings or App info: Home comes back to it. */
+    private String lastLaunched;
+    /** Home went out of sight (onStop) and hasn't been resumed since: the next Home press is a return. */
+    private boolean returning;
     /** Every app on the box, A to Z, from the last load; null after onTrimMemory. */
     private List<AppEntry> installed;
     /** What the Favourites row and the Apps grid show, tile for tile. */
@@ -95,7 +103,7 @@ public final class MainActivity extends Activity {
         network = new NetworkStatus(this, findViewById(R.id.network));
 
         // Tiles fill the row at any density: the width comes from the screen, not a fixed size.
-        columns = getResources().getInteger(R.integer.columns);
+        columns = prefs.columns(getResources().getInteger(R.integer.columns));
         gap = px(R.dimen.tile_gap);
         int screen = getResources().getDisplayMetrics().widthPixels;
         tileWidth = (screen - 2 * px(R.dimen.safe_horizontal) - (columns - 1) * gap) / columns;
@@ -106,6 +114,7 @@ public final class MainActivity extends Activity {
         settings.setBackground(palette.button());
         customize.setOnClickListener(v -> showCustomize());
         settings.setOnClickListener(v -> openSettings());
+        setAnimations(prefs.animations());
 
         // Installs, removals, and apps disabled or enabled over ADB all change the grid.
         IntentFilter filter = new IntentFilter();
@@ -115,6 +124,7 @@ public final class MainActivity extends Activity {
         filter.addDataScheme("package");
         registerReceiver(packagesChanged, filter);
         loadApps();
+        openOnStart();
     }
 
     @Override
@@ -128,18 +138,32 @@ public final class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        // Back from an app lands here without onNewIntent: focus is still on its tile, nothing to do.
+        returning = false;
+    }
+
+    @Override
     protected void onStop() {
         endMove();
         network.stop();
+        returning = true;
         super.onStop();
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        // The Home button: close any menu, finish a move, back to the top and the first app.
+        // The Home button. Coming back from an app (onNewIntent comes before onResume), focus its tile; pressed
+        // on Home itself, back to the top and the first app. Either way any menu closes and a move finishes.
         endMove();
         dismissDialog();
+        if (returning) {
+            View tile = lastLaunched != null ? findTile(lastLaunched) : null;
+            if (tile != null) tile.requestFocus();
+            return;
+        }
         scroll.scrollTo(0, 0);
         focusFirstTile();
     }
@@ -266,7 +290,8 @@ public final class MainActivity extends Activity {
         empty.setVisibility(dockApps.isEmpty() && gridApps.isEmpty() ? View.VISIBLE : View.GONE);
 
         if (!focusTiles) return;
-        View restore = keep != null ? findTile(keep) : null;
+        // After onTrimMemory nothing was focused: the app last opened, as if the tiles had never gone.
+        View restore = findTile(keep != null ? keep : lastLaunched);
         if (restore == null && keepGrid != null && keepGrid.getChildCount() > 0)
             restore = keepGrid.getChildAt(Math.min(keepIndex, keepGrid.getChildCount() - 1));
         if (restore != null) restore.requestFocus();
@@ -303,7 +328,13 @@ public final class MainActivity extends Activity {
         tile.setOnFocusChangeListener((v, hasFocus) -> {
             float scale = hasFocus ? FOCUS_SCALE : 1f;
             v.setTranslationZ(hasFocus ? 1f : 0f);
-            v.animate().scaleX(scale).scaleY(scale).setDuration(FOCUS_MS);
+            if (animations) {
+                v.animate().scaleX(scale).scaleY(scale).setDuration(FOCUS_MS);
+            } else {
+                v.animate().cancel();
+                v.setScaleX(scale);
+                v.setScaleY(scale);
+            }
         });
         return tile;
     }
@@ -412,23 +443,93 @@ public final class MainActivity extends Activity {
         arrange();
     }
 
-    // ----- Customize menu: theme, hidden apps, reset order -----
+    // ----- Customize menu -----
 
     private void showCustomize() {
         if (installed == null) return;   // still loading
         int hiddenCount = hiddenApps().size();
-        String[] items = {
-                getString(R.string.theme),
-                hiddenCount > 0 ? getString(R.string.hidden_apps_count, hiddenCount) : getString(R.string.hidden_apps),
-                getString(R.string.reset_order),
-        };
+        AppEntry onStart = findInstalled(prefs.openOnStart());
+        List<String> items = new ArrayList<>();
+        List<Runnable> actions = new ArrayList<>();
+        items.add(getString(R.string.theme));
+        actions.add(this::showThemes);
+        items.add(getString(R.string.apps_per_row_value, columns));
+        actions.add(this::showColumns);
+        items.add(getString(animations ? R.string.animations_on : R.string.animations_off));
+        actions.add(this::toggleAnimations);
+        items.add(getString(R.string.open_on_start_value, onStart != null ? onStart.label : getString(R.string.off)));
+        actions.add(this::showOpenOnStart);
+        items.add(hiddenCount > 0 ? getString(R.string.hidden_apps_count, hiddenCount) : getString(R.string.hidden_apps));
+        actions.add(this::showHidden);
+        items.add(getString(R.string.reset_order));
+        actions.add(this::resetOrder);
+        items.add(getString(R.string.default_home));
+        actions.add(this::chooseDefaultHome);
         showDialog(new AlertDialog.Builder(this, R.style.Dialog)
                 .setTitle(R.string.customize)
-                .setItems(items, (d, which) -> {
-                    if (which == 0) showThemes();
-                    else if (which == 1) showHidden();
-                    else resetOrder();
+                .setItems(items.toArray(new String[0]), (d, which) -> actions.get(which).run()));
+    }
+
+    private void showColumns() {
+        String[] choices = {"4", "5", "6", "7"};
+        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
+                .setTitle(R.string.apps_per_row)
+                .setSingleChoiceItems(choices, columns - 4, (d, which) -> {
+                    d.dismiss();
+                    if (which + 4 == columns) return;
+                    prefs.setColumns(which + 4);
+                    recreate();   // tile sizes are worked out in onCreate
                 }));
+    }
+
+    private void toggleAnimations() {
+        prefs.setAnimations(!animations);
+        setAnimations(!animations);
+        Toast.makeText(this, animations ? R.string.animations_on : R.string.animations_off, Toast.LENGTH_SHORT).show();
+    }
+
+    /** Off: the focused tile grows at once and the grid jumps instead of scrolling, for a GPU that can't keep up. */
+    private void setAnimations(boolean on) {
+        animations = on;
+        scroll.setSmoothScrollingEnabled(on);
+    }
+
+    private void showOpenOnStart() {
+        List<AppEntry> apps = new ArrayList<>(installed);
+        String current = prefs.openOnStart();
+        String[] labels = new String[apps.size() + 1];
+        labels[0] = getString(R.string.off);
+        int checked = 0;
+        for (int i = 0; i < apps.size(); i++) {
+            labels[i + 1] = apps.get(i).label;
+            if (apps.get(i).packageName().equals(current)) checked = i + 1;
+        }
+        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
+                .setTitle(R.string.open_on_start)
+                .setSingleChoiceItems(labels, checked, (d, which) -> {
+                    d.dismiss();
+                    prefs.setOpenOnStart(which == 0 ? "" : apps.get(which - 1).packageName());
+                    // This boot counts as done: the app opens from the next start on, not now.
+                    prefs.setOpenedOnBoot(bootId());
+                }));
+    }
+
+    /**
+     * Android's Home settings page where the box has one. Android TV often has none: then this launcher stops
+     * being the default and Android asks which Home to use, offering every enabled Home app, the original one
+     * included. Backing out of the question leaves no default, and the next Home press asks again.
+     */
+    @SuppressWarnings("deprecation")
+    private void chooseDefaultHome() {
+        Intent page = new Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (page.resolveActivity(getPackageManager()) != null) {
+            start(page, getString(R.string.cannot_open, getString(R.string.default_home)), null);
+            return;
+        }
+        getPackageManager().clearPackagePreferredActivities(getPackageName());
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        start(home, getString(R.string.cannot_open, getString(R.string.default_home)), null);
     }
 
     private void showThemes() {
@@ -487,26 +588,58 @@ public final class MainActivity extends Activity {
     private void open(AppEntry app) {
         Intent intent = Intent.makeMainActivity(app.component)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-        start(intent, getString(R.string.cannot_open, app.label));
+        start(intent, getString(R.string.cannot_open, app.label), app.packageName());
     }
 
     private void openAppInfo(AppEntry app) {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.fromParts("package", app.packageName(), null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        start(intent, getString(R.string.cannot_open, getString(R.string.app_info)));
+        start(intent, getString(R.string.cannot_open, getString(R.string.app_info)), null);
     }
 
     private void openSettings() {
         start(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                getString(R.string.cannot_open_settings));
+                getString(R.string.cannot_open_settings), null);
     }
 
-    private void start(Intent intent, String failure) {
+    /**
+     * Customize > Open on start: the chosen app opens once each time the box starts. Home and Back still reach
+     * the launcher afterwards. An app that is gone or disabled leaves Home on screen.
+     */
+    private void openOnStart() {
+        String pkg = prefs.openOnStart();
+        long boot = bootId();
+        if (pkg.isEmpty() || prefs.openedOnBoot() == boot) return;
+        prefs.setOpenedOnBoot(boot);
+        PackageManager pm = getPackageManager();
+        Intent intent = pm.getLeanbackLaunchIntentForPackage(pkg);
+        if (intent == null) intent = pm.getLaunchIntentForPackage(pkg);
+        if (intent == null) return;
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+        start(intent, getString(R.string.cannot_open, pkg), pkg);
+    }
+
+    /** Different on every boot: Android's boot counter, or where the firmware has none, the boot time in minutes. */
+    private long bootId() {
+        int count = Settings.Global.getInt(getContentResolver(), Settings.Global.BOOT_COUNT, -1);
+        if (count >= 0) return count;
+        return (System.currentTimeMillis() - SystemClock.elapsedRealtime()) / 60_000;
+    }
+
+    /** {@code pkg} is the app being opened, so Home comes back to its tile; null for Settings and the like. */
+    private void start(Intent intent, String failure, String pkg) {
         try {
             startActivity(intent);
+            lastLaunched = pkg;
         } catch (ActivityNotFoundException | SecurityException e) {
             Toast.makeText(this, failure, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private AppEntry findInstalled(String pkg) {
+        for (AppEntry app : installed)
+            if (app.packageName().equals(pkg)) return app;
+        return null;
     }
 
     // ----- Helpers -----

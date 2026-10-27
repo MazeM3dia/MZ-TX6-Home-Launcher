@@ -26,6 +26,14 @@
     <string name="hidden_apps_title">Ticked apps stay hidden</string>
     <string name="no_hidden_apps">No hidden apps</string>
     <string name="reset_order">Reset app order</string>
+    <string name="apps_per_row">Apps per row</string>
+    <string name="apps_per_row_value">Apps per row: %1$d</string>
+    <string name="animations_on">Animations: on</string>
+    <string name="animations_off">Animations: off</string>
+    <string name="open_on_start">Open on start</string>
+    <string name="open_on_start_value">Open on start: %1$s</string>
+    <string name="off">Off</string>
+    <string name="default_home">Choose default home</string>
     <string name="order_reset">App order reset to A–Z</string>
     <string-array name="palette_names">
         <item>Midnight</item>
@@ -40,6 +48,7 @@
     <string name="network_ethernet">Ethernet</string>
     <string name="network_other">Online</string>
     <string name="network_offline">Offline</string>
+    <string name="network_no_internet">No internet</string>
 
     <!-- Screensaver, as listed in the box\'s Settings > Screen saver -->
     <string name="dream_name">MZ TX6 Clock</string>

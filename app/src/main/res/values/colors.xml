@@ -5,7 +5,9 @@
     <color name="background_bottom">#FF0D1117</color>
     <color name="text_primary">#FFFFFFFF</color>
     <color name="text_secondary">#FFAAB4C3</color>
-    <color name="offline">#FFFFB74D</color>
+    <!-- Network label: orange while connected without internet, red while offline. -->
+    <color name="no_internet">#FFFFB74D</color>
+    <color name="offline">#FFEF5350</color>
     <!-- Screensaver text: dimmer than white, kinder to a screen left on for hours. -->
     <color name="dream_text">#B3FFFFFF</color>
     <color name="launcher_icon_background">#FF2B6CB0</color>

@@ -9,12 +9,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** The owner's choices: app order, favourites, hidden apps and theme. Packages are stored one per line. */
+/**
+ * The owner's choices: app order, favourites, hidden apps, theme, apps per row, animations and the app to open
+ * on start. Packages are stored one per line.
+ */
 final class HomePrefs {
     private static final String ORDER = "order";
     private static final String DOCK = "dock";
     private static final String HIDDEN = "hidden";
     private static final String PALETTE = "palette";
+    private static final String COLUMNS = "columns";
+    private static final String ANIMATIONS = "animations";
+    private static final String OPEN_ON_START = "open_on_start";
+    private static final String OPENED_ON_BOOT = "opened_on_boot";
 
     private final SharedPreferences prefs;
 
@@ -39,6 +46,26 @@ final class HomePrefs {
     int palette() { return prefs.getInt(PALETTE, 0); }
 
     void setPalette(int index) { prefs.edit().putInt(PALETTE, index).apply(); }
+
+    /** Tiles per row, 4 to 7; {@code fallback} (res/values/integers.xml) until the owner picks one. */
+    int columns(int fallback) { return prefs.getInt(COLUMNS, fallback); }
+
+    void setColumns(int columns) { prefs.edit().putInt(COLUMNS, columns).apply(); }
+
+    /** Focus zoom and smooth scrolling; off for a box whose GPU can't keep up. */
+    boolean animations() { return prefs.getBoolean(ANIMATIONS, true); }
+
+    void setAnimations(boolean on) { prefs.edit().putBoolean(ANIMATIONS, on).apply(); }
+
+    /** The app opened once after the box starts; empty for none. */
+    String openOnStart() { return prefs.getString(OPEN_ON_START, ""); }
+
+    void setOpenOnStart(String pkg) { prefs.edit().putString(OPEN_ON_START, pkg).apply(); }
+
+    /** The boot that already opened it (MainActivity.bootId), so it opens once per boot. */
+    long openedOnBoot() { return prefs.getLong(OPENED_ON_BOOT, Long.MIN_VALUE); }
+
+    void setOpenedOnBoot(long boot) { prefs.edit().putLong(OPENED_ON_BOOT, boot).apply(); }
 
     private List<String> list(String key) {
         String text = prefs.getString(key, "");

@@ -14,11 +14,15 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - Package `com.mazem3dia.mztx6home`. Plain Java, Android framework only: no AndroidX, no app dependencies
   (JUnit is test-only)
 - `MainActivity`: Home screen (clock, date, network label, Customize and Settings buttons, Favourites row,
-  Apps grid), tile menu (Move, favourite, Hide, App info), Customize menu (Theme, Hidden apps, Reset order)
+  Apps grid), tile menu (Move, favourite, Hide, App info), Customize menu (Theme, Apps per row 4-7,
+  Animations, Open on start, Hidden apps, Reset order, Choose default home)
+- Home key: back from an app focuses that app's tile; pressed on Home, back to the top. Open on start opens
+  its app once per boot (Settings.Global.BOOT_COUNT, else boot time in minutes)
 - `AppLoader`: finds LAUNCHER and LEANBACK_LAUNCHER apps; `AppEntry`: one tile
 - `Arrangement`: order and move logic on package names, unit-tested in `app/src/test`
 - `HomePrefs`: owner's choices in SharedPreferences; `Palette`: 5 colour themes drawn in code
-- `NetworkStatus`: Wi-Fi/Ethernet/Offline label, listens only between onStart and onStop
+- `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
+  between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)
 - Tile width comes from the screen width and `res/values/integers.xml` columns, so any density fills the row
 - Tile menu opens on OK *release* after a hold (first key repeat), or on Menu: a dialog shown while a key is
@@ -31,6 +35,11 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   with `adb shell wm density reset`. Hold OK: `adb shell input keyevent --longpress DPAD_CENTER`
 - Screensaver: `settings put secure screensaver_components com.mazem3dia.mztx6home/.ClockDream`, then
   `am start -n com.android.systemui/.Somnambulator`; put the old value back afterwards
+- Home on the emulator: Google's TV launcher declares HOME priority 2, so `cmd package set-home-activity` is
+  ignored. To test as Home: `pm disable-user --user 0 com.google.android.tvlauncher`; undo with
+  `pm enable com.google.android.tvlauncher`
+- No internet: point `captive_portal_http(s)_url` (settings global) at `127.0.0.1:9`, toggle Wi-Fi; then
+  `settings delete` both and toggle again
 
 ## Build rules
 - minSdk 26, targetSdk 34, compileSdk 35 (installed)
@@ -44,6 +53,10 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - Ask before running any command that changes the device
 - Disable, never uninstall; always keep a working Home app
 - Never disable AliceUX until the new launcher is confirmed as Home
+- HOME priority: Android only offers the highest-priority Home apps. Ours is 0; a stock launcher declaring more
+  (Google's TV launcher: 2) wins over any default and hides the picker. In the read-only step, check AliceUX's
+  HOME intent-filter priority (`dumpsys package <aliceux>`): above 0, our launcher can't become Home while
+  AliceUX is enabled, and "Choose default home" goes straight back to AliceUX
 
 ## Useful references
 - ../cleanyourtv-main/launcher/app/src/main/AndroidManifest.xml, MainActivity.java, GridNavigation.java
