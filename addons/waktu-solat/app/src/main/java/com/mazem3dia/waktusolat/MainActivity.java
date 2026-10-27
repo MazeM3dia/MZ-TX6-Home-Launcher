@@ -33,8 +33,8 @@ public final class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 1;
     /** The eight times in two rows of four. */
     private static final int PER_ROW = 4;
-    /** One icon per Jakim.NAMES entry: Imsak and Subuh pre-dawn, Syuruk and Dhuha the rising sun. */
-    private static final int[] ICONS = {R.drawable.ic_fajr, R.drawable.ic_fajr, R.drawable.ic_sunrise,
+    /** One icon per Jakim.NAMES entry: Syuruk and Dhuha share the rising sun. */
+    private static final int[] ICONS = {R.drawable.ic_imsak, R.drawable.ic_fajr, R.drawable.ic_sunrise,
             R.drawable.ic_sunrise, R.drawable.ic_dhuhr, R.drawable.ic_asr, R.drawable.ic_maghrib, R.drawable.ic_isha};
 
     private final Handler main = new Handler(Looper.getMainLooper());
