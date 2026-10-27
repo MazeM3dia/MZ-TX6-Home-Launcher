@@ -23,6 +23,9 @@
         <intent>
             <action android:name="android.settings.SETTINGS" />
         </intent>
+        <!-- The Waktu Solat add-on: its provider (prayer times, zone) and its page. -->
+        <package android:name="com.mazem3dia.waktusolat" />
+        <provider android:authorities="com.mazem3dia.waktusolat" />
         <!-- Customize > Choose default home: Android's Home settings page, where the box has one. -->
         <intent>
             <action android:name="android.settings.HOME_SETTINGS" />
@@ -34,7 +37,8 @@
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/banner"
         android:theme="@style/Theme.Tx6Home"
-        android:allowBackup="false">
+        android:allowBackup="false"
+        android:supportsRtl="true">
 
         <activity
             android:name=".MainActivity"

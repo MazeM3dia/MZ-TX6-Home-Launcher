@@ -25,6 +25,7 @@ final class HomePrefs {
     private static final String GLOW = "glow";
     private static final String BUTTON_LABELS = "button_labels";
     private static final String DEMO_APPS = "demo_apps";
+    private static final String PRAYER_ON_HOME = "prayer_on_home";
 
     private final SharedPreferences prefs;
 
@@ -69,6 +70,11 @@ final class HomePrefs {
     boolean buttonLabels() { return prefs.getBoolean(BUTTON_LABELS, true); }
 
     void setButtonLabels(boolean on) { prefs.edit().putBoolean(BUTTON_LABELS, on).apply(); }
+
+    /** The Waktu Solat add-on's Hijri date and next prayer in the header, when the add-on is installed. */
+    boolean prayerOnHome() { return prefs.getBoolean(PRAYER_ON_HOME, true); }
+
+    void setPrayerOnHome(boolean on) { prefs.edit().putBoolean(PRAYER_ON_HOME, on).apply(); }
 
     /** Debug build only: DemoApps' fake tiles added to the real ones. */
     boolean demoApps() { return prefs.getBoolean(DEMO_APPS, false); }

@@ -139,7 +139,10 @@ public final class MainActivity extends Activity {
         boolean clock24 = DateFormat.is24HourFormat(this);
         for (int i = 0; i < Jakim.NAMES.length; i++) rows.addView(card(i, s.today.minutes[i], i == highlight,
                 clock24), cardParams(i));
-        String updated = s.updated > 0 ? DateFormat.getTimeFormat(this).format(s.updated) : "";
+        Calendar fetched = Calendar.getInstance();
+        fetched.setTimeInMillis(s.updated);
+        String updated = s.updated > 0 ? Jakim.time(fetched.get(Calendar.HOUR_OF_DAY) * 60
+                + fetched.get(Calendar.MINUTE), clock24) : "";
         status.setText(getString(s.error == null ? R.string.status : R.string.status_offline, updated));
     }
 

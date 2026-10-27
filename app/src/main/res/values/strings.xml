@@ -22,25 +22,22 @@
     <string name="favourites_full">Favourites are full: up to %1$d</string>
     <string name="move_hint">Arrows to move, OK to finish</string>
 
-    <!-- Customize menu -->
+    <!-- Customize panel -->
+    <string name="section_look">Look</string>
+    <string name="section_home">Home</string>
+    <string name="section_debug">Debug build</string>
+    <string name="glow">Colour glow</string>
+    <string name="button_labels">Button labels</string>
+    <string name="animations">Animations</string>
+    <string name="on">On</string>
+    <string name="panel_hint">◀ ▶ change   ·   Back to return</string>
     <string name="theme">Theme</string>
     <string name="hidden_apps">Hidden apps</string>
-    <string name="hidden_apps_count">Hidden apps (%1$d)</string>
-    <string name="hidden_apps_title">Ticked apps stay hidden</string>
-    <string name="no_hidden_apps">No hidden apps</string>
     <string name="reset_order">Reset app order</string>
     <string name="apps_per_row">Apps per row</string>
-    <string name="apps_per_row_value">Apps per row: %1$d</string>
-    <string name="animations_on">Animations: on</string>
-    <string name="animations_off">Animations: off</string>
     <string name="open_on_start">Open on start</string>
-    <string name="open_on_start_value">Open on start: %1$s</string>
     <string name="off">Off</string>
     <string name="default_home">Choose default home</string>
-    <string name="glow_on">Colour glow: on</string>
-    <string name="glow_off">Colour glow: off</string>
-    <string name="button_labels_on">Button labels: on</string>
-    <string name="button_labels_off">Button labels: off</string>
     <string name="order_reset">App order reset to A–Z</string>
     <string-array name="palette_names">
         <item>Midnight</item>
@@ -49,6 +46,24 @@
         <item>Plum</item>
         <item>Graphite</item>
     </string-array>
+
+    <!-- Waktu solat (Malay, as JAKIM e-Solat): the Customize section and the header lines -->
+    <string name="section_prayer">Waktu solat</string>
+    <string name="prayer_on_home">Papar di Home</string>
+    <string name="yes">Ya</string>
+    <string name="no">Tidak</string>
+    <string name="zone">Zon</string>
+    <string name="zone_auto">Auto (lokasi kotak)</string>
+    <string name="zone_auto_detail">Zon dikesan daripada lokasi kotak, jika ada</string>
+    <string name="zone_auto_value">Auto · %1$s</string>
+    <string name="zone_none">Belum dipilih</string>
+    <string name="choose_state">Pilih negeri</string>
+    <string name="open_prayer">Buka Waktu Solat</string>
+    <string name="next_prayer">%1$s %2$s · %3$s</string>
+    <string name="prayer_choose_zone">Waktu solat: pilih zon dalam Customize</string>
+    <string name="prayer_locating">Waktu solat: mengesan lokasi…</string>
+    <string name="prayer_loading">Waktu solat: memuat turun…</string>
+    <string name="prayer_offline">Waktu solat: tiada sambungan</string>
 
     <!-- Network label -->
     <string name="network_wifi">Wi-Fi</string>

@@ -17,7 +17,9 @@ final class NetworkStatus extends ConnectivityManager.NetworkCallback {
     private final ConnectivityManager connectivity;
     private final TextView label;
     /** Button labels off: the icon alone while all is well; No internet and Offline keep their words. */
-    private final boolean iconOnly;
+    private boolean iconOnly;
+    /** The last state shown, so a change of iconOnly can show it again. */
+    private NetworkCapabilities shown;
     private final int padding;
     private final Handler main = new Handler(Looper.getMainLooper());
 
@@ -32,6 +34,12 @@ final class NetworkStatus extends ConnectivityManager.NetworkCallback {
         // Offline until the system reports a network; registering reports the current one straight away.
         show(null);
         connectivity.registerDefaultNetworkCallback(this);
+    }
+
+    /** Customize > Button labels, applied at once. */
+    void setIconOnly(boolean iconOnly) {
+        this.iconOnly = iconOnly;
+        show(shown);
     }
 
     void stop() {
@@ -51,6 +59,7 @@ final class NetworkStatus extends ConnectivityManager.NetworkCallback {
     }
 
     private void show(NetworkCapabilities capabilities) {
+        shown = capabilities;
         int text, icon = 0, color = R.color.text_secondary;
         if (capabilities == null) {
             text = R.string.network_offline;

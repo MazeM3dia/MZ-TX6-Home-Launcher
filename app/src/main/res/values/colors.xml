@@ -6,6 +6,10 @@
     <color name="text_primary">#FFFFFFFF</color>
     <color name="text_secondary">#FFAAB4C3</color>
     <color name="divider">#4DFFFFFF</color>
+    <!-- Home dimmed behind the Customize panel. -->
+    <color name="scrim">#99000000</color>
+    <!-- The next prayer in the header: Waktu Solat's green, lightened to read on every palette. -->
+    <color name="prayer">#FF7CE0AE</color>
     <!-- Network label: orange while connected without internet, red while offline. -->
     <color name="no_internet">#FFFFB74D</color>
     <color name="offline">#FFEF5350</color>

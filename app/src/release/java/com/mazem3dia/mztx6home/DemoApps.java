@@ -11,7 +11,7 @@ final class DemoApps {
 
     private DemoApps() { }
 
-    static String menuLabel(boolean on) {
+    static String label() {
         return "";
     }
 

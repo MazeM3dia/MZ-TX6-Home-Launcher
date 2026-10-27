@@ -2,7 +2,8 @@
 
 Small separate TV apps, copied from the cleanyourtv repo's `addons/` (MIT, see `LICENSE-cleanyourtv.txt`;
 each add-on's own README lists its author and credits). They are ordinary apps: MZ TX6 Home shows each as a
-normal tile, nothing in the launcher depends on them, and each is built and installed on its own.
+normal tile and works without any of them; each is built and installed on its own. Waktu Solat also feeds the
+launcher's header and Customize panel through its provider, when it is installed.
 
 | Add-on | Package | What it does | Permissions |
 |---|---|---|---|

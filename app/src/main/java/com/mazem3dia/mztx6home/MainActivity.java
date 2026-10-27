@@ -40,9 +40,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * The home screen: clock, date, network, the Customize and Settings buttons, a Favourites row and a grid of
- * every other app. Hold OK (or press Menu) on a tile for its menu: Move, favourite, Hide, App info. Customize
- * holds the theme, apps per row, animations, the app to open on start, hidden apps and the default home.
+ * The home screen: clock, date (with the Waktu Solat add-on, the Hijri date and the next prayer), network, the
+ * Customize and Settings buttons, a Favourites row and a grid of every other app. Hold OK (or press Menu) on a tile
+ * for its menu: Move, favourite, Hide, App info. Customize is a side panel (CustomizePanel) whose changes apply
+ * at once: look, apps per row, open on start, hidden apps, default home, and the prayer zone.
  */
 public final class MainActivity extends Activity {
     private static final float FOCUS_SCALE = 1.08f;
@@ -72,8 +73,25 @@ public final class MainActivity extends Activity {
     private GradientDrawable glow;
     private ValueAnimator glowFade;
     private int glowColor = GlowColor.NONE;
-    private View settings;
+    private TextView settings;
+    private TextView customizeButton;
+    private TextView networkPill;
+    /** The top buttons' words and padding, to put back when Button labels is turned on again. */
+    private CharSequence customizeText;
+    private CharSequence settingsText;
+    private final int[] buttonPadding = new int[4];
+    private int buttonDrawablePadding;
     private TextView empty;
+    private CustomizePanel panel;
+    private PrayerHeader prayerHeader;
+    /** The add-on's last answer while Customize is open: the zone setting. */
+    private Bundle prayerInfo;
+    /** JAKIM's zones from the add-on, asked for once. */
+    private String[] zoneCodes;
+    private String[] zoneStates;
+    private String[] zoneAreas;
+    /** The state whose zones the panel lists. */
+    private String zoneState;
     private int columns;
     private int gap;
     private int tileWidth;
@@ -124,35 +142,43 @@ public final class MainActivity extends Activity {
         amPm = findViewById(R.id.am_pm);
         settings = findViewById(R.id.settings);
         empty = findViewById(R.id.empty);
-        TextView customize = findViewById(R.id.customize);
-        TextView networkPill = findViewById(R.id.network);
+        customizeButton = findViewById(R.id.customize);
+        networkPill = findViewById(R.id.network);
         network = new NetworkStatus(this, networkPill, !prefs.buttonLabels());
-
         // Tiles fill the row at any density: the width comes from the screen, not a fixed size.
-        columns = prefs.columns(getResources().getInteger(R.integer.columns));
         gap = px(R.dimen.tile_gap);
-        int screen = getResources().getDisplayMetrics().widthPixels;
-        int row = screen - 2 * px(R.dimen.safe_horizontal);
-        tileWidth = (row - (columns - 1) * gap) / columns;
-        dockTileWidth = (row - 2 * px(R.dimen.band_padding) - (columns - 1) * gap) / columns;
-        dock.setColumnCount(columns);
-        grid.setColumnCount(columns);
+        computeSizes();
 
-        customize.setBackground(palette.button());
+        customizeText = customizeButton.getText();
+        settingsText = settings.getText();
+        buttonPadding[0] = customizeButton.getPaddingStart();
+        buttonPadding[1] = customizeButton.getPaddingTop();
+        buttonPadding[2] = customizeButton.getPaddingEnd();
+        buttonPadding[3] = customizeButton.getPaddingBottom();
+        buttonDrawablePadding = customizeButton.getCompoundDrawablePadding();
+        customizeButton.setBackground(palette.button());
         settings.setBackground(palette.button());
         networkPill.setBackground(palette.pill());
         dockBand.setBackground(palette.band());
-        customize.setOnClickListener(v -> showCustomize());
+        customizeButton.setOnClickListener(v -> openCustomize());
         settings.setOnClickListener(v -> openSettings());
-        if (!prefs.buttonLabels()) iconOnly(customize, (TextView) settings, networkPill);
+        if (!prefs.buttonLabels()) iconOnly(customizeButton, settings, networkPill);
         setAnimations(prefs.animations());
         if (prefs.glow()) setUpGlow();
+        panel = new CustomizePanel(this, findViewById(android.R.id.content), findViewById(R.id.home));
+        panel.setPalette(palette, animations);
+        prayerHeader = new PrayerHeader(this, loader, findViewById(R.id.hijri), findViewById(R.id.date),
+                findViewById(R.id.next_prayer));
+        prayerHeader.setEnabled(prefs.prayerOnHome() && Prayers.installed(this));
         findViewById(R.id.content).getViewTreeObserver().addOnGlobalLayoutListener(this::fitSpacer);
-        // The greeting changes with the hour; the clock's own minute tick keeps it current, no timer needed.
+        // The greeting and the prayer countdown follow the clock's own minute tick: no timer of their own.
         ((TextView) findViewById(R.id.clock)).addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
-            @Override public void afterTextChanged(Editable s) { updateGreeting(); }
+            @Override public void afterTextChanged(Editable s) {
+                updateGreeting();
+                prayerHeader.tick();
+            }
         });
 
         // Installs, removals, and apps disabled or enabled over ADB all change the grid.
@@ -170,6 +196,7 @@ public final class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         network.start();
+        prayerHeader.start();
         amPm.setVisibility(DateFormat.is24HourFormat(this) ? View.GONE : View.VISIBLE);
         updateGreeting();
         if (tilesDropped) {
@@ -189,6 +216,7 @@ public final class MainActivity extends Activity {
     protected void onStop() {
         endMove();
         network.stop();
+        prayerHeader.stop();
         returning = true;
         super.onStop();
     }
@@ -200,6 +228,7 @@ public final class MainActivity extends Activity {
         // on Home itself, back to the top and the first app. Either way any menu closes and a move finishes.
         endMove();
         dismissDialog();
+        panel.close();
         if (returning) {
             View tile = lastLaunched != null ? findTile(lastLaunched) : null;
             if (tile != null) tile.requestFocus();
@@ -234,6 +263,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         dismissDialog();
+        panel.close();
         unregisterReceiver(packagesChanged);
         main.removeCallbacksAndMessages(null);
         loader.shutdownNow();
@@ -243,6 +273,8 @@ public final class MainActivity extends Activity {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         int code = event.getKeyCode();
+        // The Customize panel takes Back; its rows take the rest. Tiles behind it get nothing.
+        if (panel.isOpen()) return panel.dispatch(event) || super.dispatchKeyEvent(event);
         if (moving != null && !isVolumeKey(code)) {
             // Move mode takes every key: arrows move the tile, OK or Back puts it down.
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -294,6 +326,8 @@ public final class MainActivity extends Activity {
                 if (load != generation || isDestroyed()) return;
                 installed = apps;
                 arrange();
+                // The Waktu Solat add-on may have come or gone with this change.
+                prayerHeader.setEnabled(prefs.prayerOnHome() && Prayers.installed(this));
             });
         });
     }
@@ -506,6 +540,13 @@ public final class MainActivity extends Activity {
         arrange();
     }
 
+    private void unhide(AppEntry app) {
+        Set<String> hidden = prefs.hidden();
+        hidden.remove(app.packageName());
+        prefs.setHidden(hidden);
+        arrange();
+    }
+
     private void hide(AppEntry app) {
         Set<String> hidden = prefs.hidden();
         hidden.add(app.packageName());
@@ -515,48 +556,282 @@ public final class MainActivity extends Activity {
         arrange();
     }
 
-    // ----- Customize menu -----
+    // ----- Customize panel -----
 
-    private void showCustomize() {
-        if (installed == null) return;   // still loading
-        int hiddenCount = hiddenApps().size();
-        AppEntry onStart = findInstalled(prefs.openOnStart());
-        List<String> items = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-        items.add(getString(R.string.theme));
-        actions.add(this::showThemes);
-        items.add(getString(R.string.apps_per_row_value, columns));
-        actions.add(this::showColumns);
-        items.add(getString(animations ? R.string.animations_on : R.string.animations_off));
-        actions.add(this::toggleAnimations);
-        items.add(getString(R.string.open_on_start_value, onStart != null ? onStart.label : getString(R.string.off)));
-        actions.add(this::showOpenOnStart);
-        items.add(hiddenCount > 0 ? getString(R.string.hidden_apps_count, hiddenCount) : getString(R.string.hidden_apps));
-        actions.add(this::showHidden);
-        items.add(getString(prefs.glow() ? R.string.glow_on : R.string.glow_off));
-        actions.add(() -> {
-            prefs.setGlow(!prefs.glow());
-            recreate();
-        });
-        items.add(getString(prefs.buttonLabels() ? R.string.button_labels_on : R.string.button_labels_off));
-        actions.add(() -> {
-            prefs.setButtonLabels(!prefs.buttonLabels());
-            recreate();
-        });
-        items.add(getString(R.string.reset_order));
-        actions.add(this::resetOrder);
-        items.add(getString(R.string.default_home));
-        actions.add(this::chooseDefaultHome);
-        if (DemoApps.AVAILABLE) {
-            items.add(DemoApps.menuLabel(prefs.demoApps()));
-            actions.add(() -> {
-                prefs.setDemoApps(!prefs.demoApps());
-                loadApps();
-            });
+    /** Opens the panel; with the Waktu Solat add-on, after asking it for the zone (and the zone list, once). */
+    private void openCustomize() {
+        if (installed == null || panel.isOpen()) return;   // still loading
+        if (!Prayers.installed(this)) {
+            prayerInfo = null;
+            panel.open(mainPage);
+            return;
         }
-        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
-                .setTitle(R.string.customize)
-                .setItems(items.toArray(new String[0]), (d, which) -> actions.get(which).run()));
+        Context app = getApplicationContext();
+        boolean needZones = zoneCodes == null;
+        loader.execute(() -> {
+            Bundle today = Prayers.call(app, "today", null);
+            Bundle zones = needZones ? Prayers.call(app, "zones", null) : null;
+            main.post(() -> {
+                if (isDestroyed() || panel.isOpen()) return;
+                prayerInfo = today;
+                if (zones != null) {
+                    zoneCodes = zones.getStringArray("codes");
+                    zoneStates = zones.getStringArray("states");
+                    zoneAreas = zones.getStringArray("areas");
+                }
+                panel.open(mainPage);
+            });
+        });
+    }
+
+    private final CustomizePanel.Page mainPage = new CustomizePanel.Page() {
+        @Override
+        public String title() {
+            return getString(R.string.customize);
+        }
+
+        @Override
+        public void build(CustomizePanel p) {
+            String[] themes = getResources().getStringArray(R.array.palette_names);
+            p.section(getString(R.string.section_look));
+            p.choice(getString(R.string.theme), () -> themes[prefs.palette()], step -> {
+                prefs.setPalette(Math.floorMod(prefs.palette() + step, Palette.count()));
+                applyPalette();
+            });
+            p.choice(getString(R.string.apps_per_row), () -> String.valueOf(columns), step -> {
+                prefs.setColumns(4 + Math.floorMod(columns - 4 + step, 4));   // 4 to 7
+                applyColumns();
+            });
+            p.choice(getString(R.string.glow), () -> onOff(glow != null), step -> {
+                prefs.setGlow(glow == null);
+                applyGlow(glow == null);
+            });
+            p.choice(getString(R.string.button_labels), () -> onOff(prefs.buttonLabels()), step -> {
+                prefs.setButtonLabels(!prefs.buttonLabels());
+                applyButtonLabels(prefs.buttonLabels());
+            });
+            p.choice(getString(R.string.animations), () -> onOff(animations), step -> {
+                prefs.setAnimations(!animations);
+                setAnimations(!animations);
+            });
+
+            p.section(getString(R.string.section_home));
+            AppEntry onStart = findInstalled(prefs.openOnStart());
+            p.link(getString(R.string.open_on_start), onStart != null ? onStart.label : getString(R.string.off),
+                    () -> p.push(openOnStartPage));
+            int hiddenCount = hiddenApps().size();
+            p.link(getString(R.string.hidden_apps), hiddenCount > 0 ? String.valueOf(hiddenCount) : "",
+                    () -> p.push(hiddenPage));
+            p.action(getString(R.string.reset_order), MainActivity.this::resetOrder);
+            p.action(getString(R.string.default_home), () -> {
+                p.close();
+                chooseDefaultHome();
+            });
+
+            if (Prayers.installed(MainActivity.this)) {
+                p.section(getString(R.string.section_prayer));
+                p.choice(getString(R.string.prayer_on_home),
+                        () -> getString(prefs.prayerOnHome() ? R.string.yes : R.string.no), step -> {
+                            prefs.setPrayerOnHome(!prefs.prayerOnHome());
+                            prayerHeader.setEnabled(prefs.prayerOnHome());
+                        });
+                if (zoneCodes != null) p.link(getString(R.string.zone), zoneValue(), () -> p.push(zonePage));
+                p.action(getString(R.string.open_prayer), () -> {
+                    p.close();
+                    openPrayerTimes();
+                });
+            }
+            if (DemoApps.AVAILABLE) {
+                p.section(getString(R.string.section_debug));
+                p.choice(DemoApps.label(), () -> onOff(prefs.demoApps()), step -> {
+                    prefs.setDemoApps(!prefs.demoApps());
+                    loadApps();
+                });
+            }
+        }
+    };
+
+    private final CustomizePanel.Page openOnStartPage = new CustomizePanel.Page() {
+        @Override
+        public String title() {
+            return getString(R.string.open_on_start);
+        }
+
+        @Override
+        public void build(CustomizePanel p) {
+            String current = prefs.openOnStart();
+            p.option(getString(R.string.off), null, current.isEmpty(), () -> pickOpenOnStart(""));
+            for (AppEntry app : installed)
+                p.option(app.label, null, app.packageName().equals(current),
+                        () -> pickOpenOnStart(app.packageName()));
+        }
+    };
+
+    private void pickOpenOnStart(String pkg) {
+        prefs.setOpenOnStart(pkg);
+        prefs.setOpenedOnBoot(bootId());   // this boot counts as done: the app opens from the next start on
+        panel.back();
+    }
+
+    /** Every app, ✓ for hidden: OK hides or shows it at once. */
+    private final CustomizePanel.Page hiddenPage = new CustomizePanel.Page() {
+        @Override
+        public String title() {
+            return getString(R.string.hidden_apps);
+        }
+
+        @Override
+        public void build(CustomizePanel p) {
+            Set<String> hidden = prefs.hidden();
+            for (AppEntry app : installed)
+                p.option(app.label, null, hidden.contains(app.packageName()), () -> {
+                    if (prefs.hidden().contains(app.packageName())) unhide(app);
+                    else hide(app);
+                    p.refresh();
+                });
+        }
+    };
+
+    /** Auto, then the states; a state opens its zones. */
+    private final CustomizePanel.Page zonePage = new CustomizePanel.Page() {
+        @Override
+        public String title() {
+            return getString(R.string.zone);
+        }
+
+        @Override
+        public void build(CustomizePanel p) {
+            String setting = prayerSetting();
+            boolean manual = !setting.isEmpty() && !Prayers.AUTO.equals(setting);
+            String currentState = manual ? stateOf(setting) : "";
+            p.option(getString(R.string.zone_auto), getString(R.string.zone_auto_detail),
+                    Prayers.AUTO.equals(setting), () -> setZone(Prayers.AUTO));
+            p.section(getString(R.string.choose_state));
+            String previous = null;
+            for (int i = 0; i < zoneCodes.length; i++) {
+                String state = zoneStates[i];
+                if (state.equals(previous)) continue;
+                previous = state;
+                p.link(state, state.equals(currentState) ? setting : "", () -> {
+                    zoneState = state;
+                    p.push(statePage);
+                });
+            }
+        }
+    };
+
+    private final CustomizePanel.Page statePage = new CustomizePanel.Page() {
+        @Override
+        public String title() {
+            return zoneState;
+        }
+
+        @Override
+        public void build(CustomizePanel p) {
+            String setting = prayerSetting();
+            for (int i = 0; i < zoneCodes.length; i++) {
+                if (!zoneStates[i].equals(zoneState)) continue;
+                String code = zoneCodes[i];
+                p.option(code, zoneAreas[i], code.equals(setting), () -> setZone(code));
+            }
+        }
+    };
+
+    /** Tells the add-on; Auto then opens its page, which asks for the location permission and finds the zone. */
+    private void setZone(String zone) {
+        Context app = getApplicationContext();
+        loader.execute(() -> {
+            Bundle answer = Prayers.call(app, "setZone", zone);
+            main.post(() -> {
+                if (isDestroyed()) return;
+                prayerInfo = answer;
+                prayerHeader.query();
+                if (Prayers.AUTO.equals(zone)) {
+                    panel.close();
+                    openPrayerTimes();
+                } else {
+                    panel.back();
+                    panel.back();   // from the state's zones, past the states, to the main page
+                }
+            });
+        });
+    }
+
+    private String prayerSetting() {
+        return prayerInfo != null ? prayerInfo.getString("setting", "") : "";
+    }
+
+    private String zoneValue() {
+        String setting = prayerSetting();
+        String zone = prayerInfo != null ? prayerInfo.getString("zone") : null;
+        if (Prayers.AUTO.equals(setting))
+            return zone != null ? getString(R.string.zone_auto_value, zone) : getString(R.string.zone_auto);
+        return setting.isEmpty() ? getString(R.string.zone_none) : setting;
+    }
+
+    private String stateOf(String zone) {
+        for (int i = 0; i < zoneCodes.length; i++)
+            if (zoneCodes[i].equals(zone)) return zoneStates[i];
+        return "";
+    }
+
+    private String onOff(boolean on) {
+        return getString(on ? R.string.on : R.string.off);
+    }
+
+    // ----- Changes from the panel, applied at once -----
+
+    /** Tile sizes from the screen width and apps per row; the grids are emptied, arrange() fills them again. */
+    private void computeSizes() {
+        columns = prefs.columns(getResources().getInteger(R.integer.columns));
+        int row = getResources().getDisplayMetrics().widthPixels - 2 * px(R.dimen.safe_horizontal);
+        tileWidth = (row - (columns - 1) * gap) / columns;
+        dockTileWidth = (row - 2 * px(R.dimen.band_padding) - (columns - 1) * gap) / columns;
+        dock.removeAllViews();
+        grid.removeAllViews();
+        dock.setColumnCount(columns);
+        grid.setColumnCount(columns);
+    }
+
+    private void applyColumns() {
+        computeSizes();
+        if (installed != null) arrange();
+    }
+
+    private void applyPalette() {
+        palette = new Palette(getResources(), prefs.palette());
+        getWindow().setBackgroundDrawable(palette.window());
+        customizeButton.setBackground(palette.button());
+        settings.setBackground(palette.button());
+        networkPill.setBackground(palette.pill());
+        dockBand.setBackground(palette.band());
+        if (installed != null) arrange();   // tiles are drawn from the palette
+        panel.setPalette(palette, animations);
+    }
+
+    private void applyGlow(boolean on) {
+        if (glowFade != null) glowFade.cancel();
+        if (on) {
+            setUpGlow();
+            return;
+        }
+        glow = null;
+        glowColor = GlowColor.NONE;
+        findViewById(R.id.glow).setBackground(null);
+    }
+
+    private void applyButtonLabels(boolean on) {
+        network.setIconOnly(!on);
+        if (!on) {
+            iconOnly(customizeButton, settings, networkPill);
+            return;
+        }
+        customizeButton.setText(customizeText);
+        settings.setText(settingsText);
+        for (TextView button : new TextView[] {customizeButton, settings, networkPill}) {
+            button.setPaddingRelative(buttonPadding[0], buttonPadding[1], buttonPadding[2], buttonPadding[3]);
+            if (button != networkPill) button.setCompoundDrawablePadding(buttonDrawablePadding);
+        }
     }
 
     // ----- Look: glow, greeting, icon-only buttons -----
@@ -621,48 +896,10 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void showColumns() {
-        String[] choices = {"4", "5", "6", "7"};
-        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
-                .setTitle(R.string.apps_per_row)
-                .setSingleChoiceItems(choices, columns - 4, (d, which) -> {
-                    d.dismiss();
-                    if (which + 4 == columns) return;
-                    prefs.setColumns(which + 4);
-                    recreate();   // tile sizes are worked out in onCreate
-                }));
-    }
-
-    private void toggleAnimations() {
-        prefs.setAnimations(!animations);
-        setAnimations(!animations);
-        Toast.makeText(this, animations ? R.string.animations_on : R.string.animations_off, Toast.LENGTH_SHORT).show();
-    }
-
     /** Off: the focused tile grows at once and the grid jumps instead of scrolling, for a GPU that can't keep up. */
     private void setAnimations(boolean on) {
         animations = on;
         scroll.setSmoothScrollingEnabled(on);
-    }
-
-    private void showOpenOnStart() {
-        List<AppEntry> apps = new ArrayList<>(installed);
-        String current = prefs.openOnStart();
-        String[] labels = new String[apps.size() + 1];
-        labels[0] = getString(R.string.off);
-        int checked = 0;
-        for (int i = 0; i < apps.size(); i++) {
-            labels[i + 1] = apps.get(i).label;
-            if (apps.get(i).packageName().equals(current)) checked = i + 1;
-        }
-        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
-                .setTitle(R.string.open_on_start)
-                .setSingleChoiceItems(labels, checked, (d, which) -> {
-                    d.dismiss();
-                    prefs.setOpenOnStart(which == 0 ? "" : apps.get(which - 1).packageName());
-                    // This boot counts as done: the app opens from the next start on, not now.
-                    prefs.setOpenedOnBoot(bootId());
-                }));
     }
 
     /**
@@ -681,43 +918,6 @@ public final class MainActivity extends Activity {
         Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         start(home, getString(R.string.cannot_open, getString(R.string.default_home)), null);
-    }
-
-    private void showThemes() {
-        int current = prefs.palette();
-        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
-                .setTitle(R.string.theme)
-                .setSingleChoiceItems(R.array.palette_names, current, (d, which) -> {
-                    d.dismiss();
-                    if (which == current) return;
-                    prefs.setPalette(which);
-                    recreate();   // every drawable is built again from the new palette
-                }));
-    }
-
-    private void showHidden() {
-        List<AppEntry> apps = hiddenApps();
-        if (apps.isEmpty()) {
-            Toast.makeText(this, R.string.no_hidden_apps, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String[] labels = new String[apps.size()];
-        boolean[] stillHidden = new boolean[apps.size()];
-        for (int i = 0; i < labels.length; i++) {
-            labels[i] = apps.get(i).label;
-            stillHidden[i] = true;
-        }
-        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
-                .setTitle(R.string.hidden_apps_title)
-                .setMultiChoiceItems(labels, stillHidden, (d, which, checked) -> stillHidden[which] = checked)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(android.R.string.ok, (d, which) -> {
-                    Set<String> hidden = prefs.hidden();
-                    for (int i = 0; i < labels.length; i++)
-                        if (!stillHidden[i]) hidden.remove(apps.get(i).packageName());
-                    prefs.setHidden(hidden);
-                    arrange();
-                }));
     }
 
     private List<AppEntry> hiddenApps() {
@@ -746,6 +946,16 @@ public final class MainActivity extends Activity {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.fromParts("package", app.packageName(), null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         start(intent, getString(R.string.cannot_open, getString(R.string.app_info)), null);
+    }
+
+    /** The Waktu Solat add-on's own page: all eight times, and where Auto asks for the location. */
+    private void openPrayerTimes() {
+        PackageManager pm = getPackageManager();
+        Intent intent = pm.getLeanbackLaunchIntentForPackage(Prayers.PACKAGE);
+        if (intent == null) intent = pm.getLaunchIntentForPackage(Prayers.PACKAGE);
+        if (intent == null) return;
+        start(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), getString(R.string.cannot_open,
+                getString(R.string.open_prayer)), Prayers.PACKAGE);
     }
 
     private void openSettings() {

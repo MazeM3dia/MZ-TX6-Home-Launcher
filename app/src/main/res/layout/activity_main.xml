@@ -12,7 +12,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Home's content; the Customize panel blocks focus here while it is open. -->
     <LinearLayout
+        android:id="@+id/home"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -44,49 +46,81 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:baselineAligned="true"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextClock
-                        android:id="@+id/clock"
-                        style="@style/Font.Display"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:format12Hour="@string/time_12"
-                        android:fontFeatureSettings="tnum"
-                        android:format24Hour="@string/time_24"
-                        android:includeFontPadding="false"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/clock" />
+                        android:baselineAligned="true"
+                        android:orientation="horizontal">
 
-                    <!-- AM / PM: hidden in 24-hour mode (MainActivity.onStart). -->
-                    <TextClock
-                        android:id="@+id/am_pm"
-                        style="@style/Font.Display"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:format12Hour="@string/am_pm"
-                        android:format24Hour="@string/am_pm"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/clock_suffix" />
+                        <TextClock
+                            android:id="@+id/clock"
+                            style="@style/Font.Display"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:format12Hour="@string/time_12"
+                            android:fontFeatureSettings="tnum"
+                            android:format24Hour="@string/time_24"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/clock" />
+
+                        <!-- AM / PM: hidden in 24-hour mode (MainActivity.onStart). -->
+                        <TextClock
+                            android:id="@+id/am_pm"
+                            style="@style/Font.Display"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:format12Hour="@string/am_pm"
+                            android:format24Hour="@string/am_pm"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/clock_suffix" />
+                    </LinearLayout>
 
                     <View
                         android:layout_width="1dp"
-                        android:layout_height="36dp"
-                        android:layout_gravity="center_vertical"
+                        android:layout_height="match_parent"
                         android:layout_marginStart="24dp"
+                        android:layout_marginTop="10dp"
                         android:layout_marginEnd="24dp"
+                        android:layout_marginBottom="6dp"
                         android:background="@color/divider" />
 
-                    <TextClock
-                        android:id="@+id/date"
-                        style="@style/Caps"
+                    <!-- Hijri date and next prayer from the Waktu Solat add-on (PrayerHeader), around the date. -->
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:format12Hour="@string/date_header"
-                        android:format24Hour="@string/date_header"
-                        android:textSize="@dimen/date" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/hijri"
+                            style="@style/Caps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:textSize="@dimen/greeting"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/date"
+                            style="@style/Caps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="@dimen/date" />
+
+                        <TextView
+                            android:id="@+id/next_prayer"
+                            style="@style/Caps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="@color/prayer"
+                            android:textSize="@dimen/greeting"
+                            android:visibility="gone" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 

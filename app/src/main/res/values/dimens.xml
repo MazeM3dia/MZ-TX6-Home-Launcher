@@ -28,6 +28,10 @@
          bottom edge: about 12% of the TX6's 811 dp height, above a soundbar or anything in front of the TV. -->
     <dimen name="focus_margin_top">40dp</dimen>
     <dimen name="focus_margin_bottom">96dp</dimen>
+    <!-- Customize panel: about a third of the TX6's 1442 dp width. -->
+    <dimen name="panel_width">520dp</dimen>
+    <dimen name="panel_title">24sp</dimen>
+    <dimen name="panel_row_radius">12dp</dimen>
     <!-- Button labels off: round icon buttons. -->
     <dimen name="icon_button_padding">12dp</dimen>
     <dimen name="hint_text">14sp</dimen>

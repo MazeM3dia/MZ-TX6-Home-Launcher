@@ -34,6 +34,7 @@ final class Palette {
     private final int[] colors;
     private final float radius;
     private final float bandRadius;
+    private final float rowRadius;
     private final int ring;
     private final int movingRing;
     private final int hairline;
@@ -42,6 +43,7 @@ final class Palette {
         colors = COLORS[index >= 0 && index < COLORS.length ? index : 0];
         radius = res.getDimension(R.dimen.tile_radius);
         bandRadius = res.getDimension(R.dimen.band_radius);
+        rowRadius = res.getDimension(R.dimen.panel_row_radius);
         ring = res.getDimensionPixelSize(R.dimen.focus_ring);
         movingRing = res.getDimensionPixelSize(R.dimen.move_ring);
         hairline = Math.max(1, Math.round(res.getDisplayMetrics().density));
@@ -89,6 +91,19 @@ final class Palette {
     /** The dark rounded band behind the favourites row. */
     Drawable band() {
         return shape(BAND_FILL, hairline, BAND_BORDER, bandRadius);
+    }
+
+    /** The Customize panel: the palette's darkest colour, nearly opaque. */
+    Drawable panel() {
+        return new ColorDrawable((colors[1] & 0xFFFFFF) | 0xF5000000);
+    }
+
+    /** A Customize row: see-through white while focused. */
+    Drawable row() {
+        StateListDrawable row = new StateListDrawable();
+        row.addState(new int[] {android.R.attr.state_focused}, shape(PILL_FOCUSED, 0, 0, rowRadius));
+        row.addState(StateSet.WILD_CARD, new ColorDrawable(0));
+        return row;
     }
 
     private static GradientDrawable shape(int fill, int strokeWidth, int strokeColor, float corner) {

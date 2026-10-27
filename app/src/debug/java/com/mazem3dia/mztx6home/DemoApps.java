@@ -28,8 +28,9 @@ final class DemoApps {
 
     private DemoApps() { }
 
-    static String menuLabel(boolean on) {
-        return on ? "Demo apps: on" : "Demo apps: off";
+    /** The Customize row's name. */
+    static String label() {
+        return "Demo apps";
     }
 
     static List<AppEntry> make(Context context) {

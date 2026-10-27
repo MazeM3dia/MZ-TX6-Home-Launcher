@@ -14,8 +14,14 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - Package `com.mazem3dia.mztx6home`. Plain Java, Android framework only: no AndroidX, no app dependencies
   (JUnit is test-only)
 - `MainActivity`: Home screen (clock, date, network label, Customize and Settings buttons, Favourites row,
-  Apps grid), tile menu (Move, favourite, Hide, App info), Customize menu (Theme, Apps per row 4-7,
-  Animations, Open on start, Hidden apps, Reset order, Choose default home)
+  Apps grid), tile menu (Move, favourite, Hide, App info), and the Customize panel's pages
+- `CustomizePanel`: the Customize side panel (built while open, removed on close). Look (theme, apps per row,
+  colour glow, button labels, animations), Home (open on start, hidden apps, reset order, default home),
+  Waktu solat (show on Home, zone, open the add-on), Debug (demo apps). Every change applies at once, no
+  recreate. Left/Right change a value, OK opens or picks, Back goes up then closes
+- `PrayerHeader` + `Prayers`: with the Waktu Solat add-on (addons/waktu-solat), the header shows the Hijri date
+  above the Malay date and the next prayer under it. Read through the add-on's provider
+  (content://com.mazem3dia.waktusolat), so the launcher keeps no INTERNET permission
 - Home key: back from an app focuses that app's tile; pressed on Home, back to the top. Open on start opens
   its app once per boot (Settings.Global.BOOT_COUNT, else boot time in minutes)
 - `AppLoader`: finds LAUNCHER and LEANBACK_LAUNCHER apps; `AppEntry`: one tile
@@ -36,7 +42,8 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - Tile width comes from the screen width and `res/values/integers.xml` columns, so any density fills the row
 - Tile menu opens on OK *release* after a hold (first key repeat), or on Menu: a dialog shown while a key is
   still down never gets key focus on Android 9
-- Permissions: ACCESS_NETWORK_STATE only (read-only network state). Never INTERNET
+- Permissions: ACCESS_NETWORK_STATE only (read-only network state). Never INTERNET: network features live in
+  add-ons (separate apps), which the launcher reads through their providers
 
 ## Testing
 - Unit tests: `./gradlew testReleaseUnitTest`
