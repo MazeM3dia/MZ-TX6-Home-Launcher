@@ -7,14 +7,15 @@ normal tile, nothing in the launcher depends on them, and each is built and inst
 | Add-on | Package | What it does | Permissions |
 |---|---|---|---|
 | [capacity-stats](capacity-stats/) | `com.lionlev.tv.capacity` | Free/total RAM and storage | None |
-| [prayer-times](prayer-times/) | `com.majnioui.tv.prayer` | Today's prayer times for one city from Aladhan, next prayer with a countdown, Hijri date | `INTERNET` |
+| [waktu-solat](waktu-solat/) | `com.mazem3dia.waktusolat` | JAKIM's eight times for a zone, in Malay, next prayer counted down, Hijri date; feeds the launcher's header and Customize | `INTERNET`, coarse location (Auto zone only) |
 
 ## Changes from the originals
 
 - Build tools aligned with the launcher, so they build offline with what is already on this PC: AGP 8.7.3,
   Gradle 8.11.1 (wrapper copied from the launcher; capacity-stats shipped without one), compileSdk 35.
   minSdk 26 and targetSdk 34 are unchanged.
-- prayer-times: the city and calculation method in `app/src/main/res/values/config.xml`.
+- waktu-solat: rewritten from @majnioui's Prayer Times for Malaysia. Data from JAKIM e-Solat instead of Aladhan,
+  Malay names and dates, Inter Display font, a provider for the launcher, new banner. See its README.
 
 ## Build and install
 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Malay, as JAKIM e-Solat uses it. -->
+<resources>
+    <string name="app_name">Waktu Solat</string>
+    <string name="loading">Memuat turun waktu solat…</string>
+    <string name="choose_zone">Pilih zon</string>
+    <string name="choose_zone_hint">Pilih zon dalam Customize di MZ TX6 Home.</string>
+    <string name="locating">Mengesan lokasi…</string>
+    <string name="no_location">Lokasi tidak dapat dikesan</string>
+    <string name="no_location_hint">Kotak ini tidak memberi lokasi. Pilih zon secara manual dalam Customize di MZ TX6 Home.</string>
+    <string name="error">Tidak dapat menghubungi JAKIM e-Solat</string>
+    <string name="error_hint">Semak sambungan internet. Waktu yang disimpan dipaparkan apabila ada.</string>
+    <string name="next_in">%1$s dalam %2$s</string>
+    <string name="next_now">Masuk waktu %1$s</string>
+    <string name="zone_line">%1$s · %2$s</string>
+    <string name="zone_line_auto">%1$s · %2$s · Auto</string>
+    <string name="dates">%1$s  ·  %2$s</string>
+    <string name="status">JAKIM e-Solat · dikemas kini %1$s</string>
+    <string name="status_offline">JAKIM e-Solat · dikemas kini %1$s · luar talian</string>
+</resources>

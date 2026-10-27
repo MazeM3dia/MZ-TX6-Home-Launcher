@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "prayer-times"
+rootProject.name = "waktu-solat"
 include ':app'
