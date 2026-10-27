@@ -712,7 +712,7 @@ public final class MainActivity extends Activity {
                 String state = zoneStates[i];
                 if (state.equals(previous)) continue;
                 previous = state;
-                p.link(state, state.equals(currentState) ? setting : "", () -> {
+                p.link(state, state.equals(currentState) ? Prayers.zoneName(setting) : "", () -> {
                     zoneState = state;
                     p.push(statePage);
                 });
@@ -732,7 +732,7 @@ public final class MainActivity extends Activity {
             for (int i = 0; i < zoneCodes.length; i++) {
                 if (!zoneStates[i].equals(zoneState)) continue;
                 String code = zoneCodes[i];
-                p.option(code, zoneAreas[i], code.equals(setting), () -> setZone(code));
+                p.option(Prayers.zoneName(code), zoneAreas[i], code.equals(setting), () -> setZone(code));
             }
         }
     };
@@ -761,12 +761,14 @@ public final class MainActivity extends Activity {
         return prayerInfo != null ? prayerInfo.getString("setting", "") : "";
     }
 
+    /** "Johor · Zon 1", "Auto · Johor · Zon 1", or not chosen yet. */
     private String zoneValue() {
         String setting = prayerSetting();
         String zone = prayerInfo != null ? prayerInfo.getString("zone") : null;
+        String named = zone == null ? null : getString(R.string.zone_value, stateOf(zone), Prayers.zoneName(zone));
         if (Prayers.AUTO.equals(setting))
-            return zone != null ? getString(R.string.zone_auto_value, zone) : getString(R.string.zone_auto);
-        return setting.isEmpty() ? getString(R.string.zone_none) : setting;
+            return named != null ? getString(R.string.zone_auto_value, named) : getString(R.string.zone_auto);
+        return named != null ? named : getString(R.string.zone_none);
     }
 
     private String stateOf(String zone) {

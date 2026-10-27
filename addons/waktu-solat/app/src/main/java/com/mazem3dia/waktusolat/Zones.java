@@ -205,6 +205,15 @@ final class Zones {
 
     private Zones() { }
 
+    /** "JHR01" to "Zon 1": JAKIM numbers the zones within each state. */
+    static String name(String code) {
+        try {
+            return "Zon " + Integer.parseInt(code.substring(3));
+        } catch (RuntimeException e) {
+            return code;
+        }
+    }
+
     static int indexOf(String code) {
         for (int i = 0; i < CODES.length; i++)
             if (CODES[i].equals(code)) return i;

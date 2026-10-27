@@ -7,13 +7,14 @@
     <string name="choose_zone_hint">Pilih zon dalam Customize di MZ TX6 Home.</string>
     <string name="locating">Mengesan lokasi…</string>
     <string name="no_location">Lokasi tidak dapat dikesan</string>
-    <string name="no_location_hint">Kotak ini tidak memberi lokasi. Pilih zon secara manual dalam Customize di MZ TX6 Home.</string>
+    <string name="no_location_hint">Android box ini tidak memberi lokasi. Pilih zon secara manual dalam Customize di MZ TX6 Home.</string>
     <string name="error">Tidak dapat menghubungi JAKIM e-Solat</string>
     <string name="error_hint">Semak sambungan internet. Waktu yang disimpan dipaparkan apabila ada.</string>
     <string name="next_in">%1$s dalam %2$s</string>
     <string name="next_now">Masuk waktu %1$s</string>
-    <string name="zone_line">%1$s · %2$s</string>
-    <string name="zone_line_auto">%1$s · %2$s · Auto</string>
+    <!-- Negeri · Zon 1 · Kawasan -->
+    <string name="zone_line">%1$s · %2$s · %3$s</string>
+    <string name="zone_line_auto">%1$s · %2$s · %3$s · Auto</string>
     <string name="dates">%1$s  ·  %2$s</string>
     <string name="status">JAKIM e-Solat · dikemas kini %1$s</string>
     <string name="status_offline">JAKIM e-Solat · dikemas kini %1$s · luar talian</string>

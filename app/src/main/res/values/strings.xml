@@ -53,9 +53,11 @@
     <string name="yes">Ya</string>
     <string name="no">Tidak</string>
     <string name="zone">Zon</string>
-    <string name="zone_auto">Auto (lokasi kotak)</string>
-    <string name="zone_auto_detail">Zon dikesan daripada lokasi kotak, jika ada</string>
+    <string name="zone_auto">Auto (lokasi Android box)</string>
+    <string name="zone_auto_detail">Zon dikesan daripada lokasi Android box, jika ada</string>
     <string name="zone_auto_value">Auto · %1$s</string>
+    <!-- Negeri · Zon 1 -->
+    <string name="zone_value">%1$s · %2$s</string>
     <string name="zone_none">Belum dipilih</string>
     <string name="choose_state">Pilih negeri</string>
     <string name="open_prayer">Buka Waktu Solat</string>

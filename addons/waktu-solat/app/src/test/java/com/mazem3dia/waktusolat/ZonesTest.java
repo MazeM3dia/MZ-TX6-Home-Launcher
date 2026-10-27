@@ -38,6 +38,13 @@ public class ZonesTest {
     }
 
     @Test
+    public void namesZonesByNumber() {
+        assertEquals("Zon 1", Zones.name("JHR01"));
+        assertEquals("Zon 7", Zones.name("PHG07"));
+        assertEquals("odd", Zones.name("odd"));
+    }
+
+    @Test
     public void looksUpCodes() {
         assertEquals("WLY01", Zones.CODES[Zones.indexOf("WLY01")]);
         assertEquals(-1, Zones.indexOf("XXX99"));

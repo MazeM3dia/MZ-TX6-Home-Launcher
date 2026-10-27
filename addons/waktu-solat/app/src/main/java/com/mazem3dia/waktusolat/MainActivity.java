@@ -31,6 +31,8 @@ public final class MainActivity extends Activity {
     private static final long MINUTE_MS = 60_000L;
     private static final long LOCATION_WAIT_MS = 20_000L;
     private static final int LOCATION_REQUEST = 1;
+    /** The eight times in two rows of four. */
+    private static final int PER_ROW = 4;
     /** One icon per Jakim.NAMES entry: Imsak and Subuh pre-dawn, Syuruk and Dhuha the rising sun. */
     private static final int[] ICONS = {R.drawable.ic_fajr, R.drawable.ic_fajr, R.drawable.ic_sunrise,
             R.drawable.ic_sunrise, R.drawable.ic_dhuhr, R.drawable.ic_asr, R.drawable.ic_maghrib, R.drawable.ic_isha};
@@ -89,7 +91,7 @@ public final class MainActivity extends Activity {
         column.addView(dates);
 
         rows = new LinearLayout(this);
-        rows.setOrientation(LinearLayout.HORIZONTAL);
+        rows.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, 0, 1f);
         rowParams.setMargins(0, dp(36), 0, 0);
         column.addView(rows, rowParams);
@@ -120,8 +122,9 @@ public final class MainActivity extends Activity {
     private void render() {
         Store.Snapshot s = Store.read(this);
         int zone = s.zone != null ? Zones.indexOf(s.zone) : -1;
+        // NEGERI · ZON 1 · KAWASAN (capitals from the view), with Auto when the zone came from the location.
         place.setText(zone < 0 ? "" : getString(Store.AUTO.equals(s.setting) ? R.string.zone_line_auto
-                : R.string.zone_line, Zones.CODES[zone], Zones.AREAS[zone]));
+                : R.string.zone_line, Zones.STATES[zone], Zones.name(Zones.CODES[zone]), Zones.AREAS[zone]));
         rows.removeAllViews();
         if (s.today == null) {
             showProblem(s.state);
@@ -137,8 +140,17 @@ public final class MainActivity extends Activity {
         int highlight = upcoming != null && upcoming[1] < 24 * 60 - minute ? upcoming[0] : -1;
         dates.setText(getString(R.string.dates, Jakim.gregorian(now), Jakim.hijri(s.today.hijri)));
         boolean clock24 = DateFormat.is24HourFormat(this);
-        for (int i = 0; i < Jakim.NAMES.length; i++) rows.addView(card(i, s.today.minutes[i], i == highlight,
-                clock24), cardParams(i));
+        LinearLayout row = null;
+        for (int i = 0; i < Jakim.NAMES.length; i++) {
+            if (i % PER_ROW == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(-1, 0, 1f);
+                if (i > 0) rowParams.topMargin = dp(12);
+                rows.addView(row, rowParams);
+            }
+            row.addView(card(i, s.today.minutes[i], i == highlight, clock24), cardParams(i % PER_ROW));
+        }
         Calendar fetched = Calendar.getInstance();
         fetched.setTimeInMillis(s.updated);
         String updated = s.updated > 0 ? Jakim.time(fetched.get(Calendar.HOUR_OF_DAY) * 60
@@ -180,7 +192,7 @@ public final class MainActivity extends Activity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER);
-        card.setPadding(dp(4), dp(20), dp(4), dp(20));
+        card.setPadding(dp(8), dp(12), dp(8), dp(12));
         GradientDrawable background = new GradientDrawable();
         background.setCornerRadius(dp(22));
         background.setColor(highlight ? accent : 0x14FFFFFF);
@@ -189,25 +201,26 @@ public final class MainActivity extends Activity {
         ImageView icon = new ImageView(this);
         icon.setImageResource(ICONS[index]);
         icon.setImageTintList(ColorStateList.valueOf(highlight ? 0xFFFFFFFF : prayer ? accent : 0x80FFFFFF));
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(40), dp(40));
-        iconParams.bottomMargin = dp(20);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(36), dp(36));
+        iconParams.bottomMargin = dp(12);
         card.addView(icon, iconParams);
         TextView name = centered(text(22, medium, fg));
         name.setText(Jakim.NAMES[index]);
-        name.setPadding(0, 0, 0, dp(16));
+        name.setPadding(0, 0, 0, dp(8));
         card.addView(name);
-        TextView time = centered(text(36, highlight ? medium : light, fg));
+        TextView time = centered(text(44, highlight ? medium : light, fg));
         time.setText(Jakim.time(minutes, clock24));
-        // Shrink rather than cut "12:45 ptg" when eight cards share the width.
+        // Shrink rather than cut "12:45 ptg" on a narrow screen.
         time.setMaxLines(1);
-        time.setAutoSizeTextTypeUniformWithConfiguration(16, 36, 1, TypedValue.COMPLEX_UNIT_SP);
-        card.addView(time, new LinearLayout.LayoutParams(-1, dp(48)));
+        time.setAutoSizeTextTypeUniformWithConfiguration(20, 44, 1, TypedValue.COMPLEX_UNIT_SP);
+        card.addView(time, new LinearLayout.LayoutParams(-1, dp(56)));
         return card;
     }
 
-    private LinearLayout.LayoutParams cardParams(int index) {
+    /** {@code column} 0 to PER_ROW - 1 within its row. */
+    private LinearLayout.LayoutParams cardParams(int column) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -1, 1f);
-        params.setMargins(index == 0 ? 0 : dp(6), 0, index == Jakim.NAMES.length - 1 ? 0 : dp(6), 0);
+        params.setMargins(column == 0 ? 0 : dp(6), 0, column == PER_ROW - 1 ? 0 : dp(6), 0);
         return params;
     }
 

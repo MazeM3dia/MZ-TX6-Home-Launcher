@@ -37,6 +37,12 @@ public class PrayersTest {
     }
 
     @Test
+    public void namesZonesByNumber() {
+        assertEquals("Zon 1", Prayers.zoneName("JHR01"));
+        assertEquals("Zon 2", Prayers.zoneName("WLY02"));
+    }
+
+    @Test
     public void writesTheDateInMalay() {
         Calendar c = Calendar.getInstance();
         c.set(2026, Calendar.OCTOBER, 27);

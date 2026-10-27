@@ -72,6 +72,15 @@ final class Prayers {
         return m == 0 ? h + " jam" : h + " jam " + m + " min";
     }
 
+    /** "JHR01" to "Zon 1": JAKIM numbers the zones within each state. */
+    static String zoneName(String code) {
+        try {
+            return "Zon " + Integer.parseInt(code.substring(3));
+        } catch (RuntimeException e) {
+            return code;
+        }
+    }
+
     /** "Selasa 27 Oktober", the header's date when the prayer lines are shown. */
     static String date(Calendar day) {
         return DAYS[day.get(Calendar.DAY_OF_WEEK) - 1] + " " + day.get(Calendar.DAY_OF_MONTH) + " "

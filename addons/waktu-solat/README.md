@@ -31,7 +31,7 @@ then the page says so and the zone is chosen by hand. The location never leaves 
 
 | Method | Answer |
 |---|---|
-| `today` | `state` (ok, loading, error, nozone, locating, nolocation), `setting`, `zone`, `area`, and with times: `hijri` ("16 Jamadilawal 1448H"), `times` and `tomorrow` (minutes after midnight: Imsak, Subuh, Syuruk, Dhuha, Zohor, Asar, Maghrib, Isyak), `day` (yyyymmdd), `updated` |
+| `today` | `state` (ok, loading, error, nozone, locating, nolocation), `setting`, `zone`, `negeri`, `area`, and with times: `hijri` ("16 Jamadilawal 1448H"), `times` and `tomorrow` (minutes after midnight: Imsak, Subuh, Syuruk, Dhuha, Zohor, Asar, Maghrib, Isyak), `day` (yyyymmdd), `updated` |
 | `zones` | `codes`, `states`, `areas` |
 | `setZone` (arg: zone code or `AUTO`) | as `today` |
 

@@ -45,10 +45,10 @@ public final class PrayerProvider extends ContentProvider {
     }
 
     /**
-     * {@code state} (Store.OK, LOADING, ERROR, NO_ZONE, LOCATING, NO_LOCATION), {@code setting}, {@code zone},
-     * {@code area}; with times: {@code hijri} ("16 Jamadilawal 1448H"), {@code times} (minutes after midnight in
-     * Jakim.NAMES order), {@code tomorrow} (the same for tomorrow, if known), {@code day} (yyyymmdd the times are
-     * for) and {@code updated} (when they were fetched, ms).
+     * {@code state} (Store.OK, LOADING, ERROR, NO_ZONE, LOCATING, NO_LOCATION), {@code setting}, {@code zone}, the
+     * zone's {@code negeri} ("Johor") and {@code area}; with times: {@code hijri} ("16 Jamadilawal 1448H"),
+     * {@code times} (minutes after midnight in Jakim.NAMES order), {@code tomorrow} (the same for tomorrow, if
+     * known), {@code day} (yyyymmdd the times are for) and {@code updated} (when they were fetched, ms).
      */
     private Bundle today() {
         Store.Snapshot s = Store.read(getContext());
@@ -57,7 +57,10 @@ public final class PrayerProvider extends ContentProvider {
         b.putString("setting", s.setting);
         b.putString("zone", s.zone);
         int index = s.zone != null ? Zones.indexOf(s.zone) : -1;
-        if (index >= 0) b.putString("area", Zones.AREAS[index]);
+        if (index >= 0) {
+            b.putString("negeri", Zones.STATES[index]);
+            b.putString("area", Zones.AREAS[index]);
+        }
         if (s.today != null) {
             b.putString("hijri", Jakim.hijri(s.today.hijri));
             b.putIntArray("times", s.today.minutes);
