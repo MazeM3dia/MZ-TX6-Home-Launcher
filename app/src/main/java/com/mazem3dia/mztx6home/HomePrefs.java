@@ -26,6 +26,7 @@ final class HomePrefs {
     private static final String BUTTON_LABELS = "button_labels";
     private static final String DEMO_APPS = "demo_apps";
     private static final String PRAYER_ON_HOME = "prayer_on_home";
+    private static final String CAPACITY_ON_HOME = "capacity_on_home";
 
     private final SharedPreferences prefs;
 
@@ -75,6 +76,11 @@ final class HomePrefs {
     boolean prayerOnHome() { return prefs.getBoolean(PRAYER_ON_HOME, true); }
 
     void setPrayerOnHome(boolean on) { prefs.edit().putBoolean(PRAYER_ON_HOME, on).apply(); }
+
+    /** Free RAM and storage under the header buttons. */
+    boolean capacityOnHome() { return prefs.getBoolean(CAPACITY_ON_HOME, true); }
+
+    void setCapacityOnHome(boolean on) { prefs.edit().putBoolean(CAPACITY_ON_HOME, on).apply(); }
 
     /** Debug build only: DemoApps' fake tiles added to the real ones. */
     boolean demoApps() { return prefs.getBoolean(DEMO_APPS, false); }

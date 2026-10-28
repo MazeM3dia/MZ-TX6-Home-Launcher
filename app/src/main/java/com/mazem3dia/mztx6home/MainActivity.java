@@ -84,6 +84,7 @@ public final class MainActivity extends Activity {
     private TextView empty;
     private CustomizePanel panel;
     private PrayerHeader prayerHeader;
+    private Capacity capacity;
     /** The add-on's last answer while Customize is open: the zone setting. */
     private Bundle prayerInfo;
     /** JAKIM's zones from the add-on, asked for once. */
@@ -170,14 +171,18 @@ public final class MainActivity extends Activity {
         prayerHeader = new PrayerHeader(this, loader, findViewById(R.id.hijri), findViewById(R.id.date),
                 findViewById(R.id.next_prayer));
         prayerHeader.setEnabled(prefs.prayerOnHome() && Prayers.installed(this));
+        capacity = new Capacity(this, findViewById(R.id.capacity));
+        capacity.setEnabled(prefs.capacityOnHome());
         findViewById(R.id.content).getViewTreeObserver().addOnGlobalLayoutListener(this::fitSpacer);
-        // The greeting and the prayer countdown follow the clock's own minute tick: no timer of their own.
+        // The greeting, the prayer countdown and the capacity line follow the clock's own minute tick: no
+        // timer of their own.
         ((TextView) findViewById(R.id.clock)).addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
             @Override public void afterTextChanged(Editable s) {
                 updateGreeting();
                 prayerHeader.tick();
+                capacity.update();
             }
         });
 
@@ -197,6 +202,7 @@ public final class MainActivity extends Activity {
         super.onStart();
         network.start();
         prayerHeader.start();
+        capacity.update();
         amPm.setVisibility(DateFormat.is24HourFormat(this) ? View.GONE : View.VISIBLE);
         updateGreeting();
         if (tilesDropped) {
@@ -616,6 +622,10 @@ public final class MainActivity extends Activity {
             });
 
             p.section(getString(R.string.section_home));
+            p.choice(getString(R.string.capacity_on_home), () -> onOff(prefs.capacityOnHome()), step -> {
+                prefs.setCapacityOnHome(!prefs.capacityOnHome());
+                capacity.setEnabled(prefs.capacityOnHome());
+            });
             AppEntry onStart = findInstalled(prefs.openOnStart());
             p.link(getString(R.string.open_on_start), onStart != null ? onStart.label : getString(R.string.off),
                     () -> p.push(openOnStartPage));
