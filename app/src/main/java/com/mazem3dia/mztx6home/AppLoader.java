@@ -37,6 +37,8 @@ final class AppLoader {
         addAll(byPackage, pm, Intent.CATEGORY_LEANBACK_LAUNCHER);
         addAll(byPackage, pm, Intent.CATEGORY_LAUNCHER);
         byPackage.remove(context.getPackageName());
+        // Device Report and Capacity Stats open from Customize > Add-ons, not from a tile.
+        byPackage.keySet().removeIf(AddOns::isAddOn);
 
         List<AppEntry> apps = new ArrayList<>(byPackage.size());
         for (ResolveInfo info : byPackage.values()) {

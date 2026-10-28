@@ -638,6 +638,17 @@ public final class MainActivity extends Activity {
                 chooseDefaultHome();
             });
 
+            List<String[]> addOns = AddOns.installed(MainActivity.this);
+            if (!addOns.isEmpty()) {
+                p.section(getString(R.string.section_addons));
+                for (String[] addOn : addOns) {
+                    p.action(addOn[1], () -> {
+                        p.close();
+                        openAddOn(addOn[0], addOn[1]);
+                    });
+                }
+            }
+
             if (Prayers.installed(MainActivity.this)) {
                 p.section(getString(R.string.section_prayer));
                 p.choice(getString(R.string.prayer_on_home),
@@ -958,6 +969,13 @@ public final class MainActivity extends Activity {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.fromParts("package", app.packageName(), null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         start(intent, getString(R.string.cannot_open, getString(R.string.app_info)), null);
+    }
+
+    /** An add-on from Customize > Add-ons. Home returns to the top, as there is no tile to focus. */
+    private void openAddOn(String pkg, String label) {
+        Intent intent = AddOns.launchIntent(this, pkg);
+        if (intent == null) return;
+        start(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), getString(R.string.cannot_open, label), null);
     }
 
     /** The Waktu Solat add-on's own page: all eight times, and where Auto asks for the location. */

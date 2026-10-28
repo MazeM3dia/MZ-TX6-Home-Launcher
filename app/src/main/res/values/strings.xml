@@ -52,6 +52,7 @@
 
     <!-- Waktu solat (Malay, as JAKIM e-Solat): the Customize section and the header lines -->
     <string name="section_prayer">Waktu solat</string>
+    <string name="section_addons">Add-ons</string>
     <string name="prayer_on_home">Papar di Home</string>
     <string name="yes">Ya</string>
     <string name="no">Tidak</string>

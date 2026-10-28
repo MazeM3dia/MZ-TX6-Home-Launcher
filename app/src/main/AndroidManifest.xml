@@ -25,6 +25,9 @@
         </intent>
         <!-- The Waktu Solat add-on: its provider (prayer times, zone) and its page. -->
         <package android:name="com.mazem3dia.waktusolat" />
+        <!-- Customize > Add-ons: opened from the panel, kept out of the Apps grid (AddOns). -->
+        <package android:name="com.mazem3dia.devicereport" />
+        <package android:name="com.lionlev.tv.capacity" />
         <provider android:authorities="com.mazem3dia.waktusolat" />
         <!-- Customize > Choose default home: Android's Home settings page, where the box has one. -->
         <intent>
