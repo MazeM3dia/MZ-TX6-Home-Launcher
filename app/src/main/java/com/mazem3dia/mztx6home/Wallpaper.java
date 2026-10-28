@@ -17,7 +17,10 @@ import java.util.concurrent.Executor;
  * back in onTrimMemory and decoded again when Home returns.
  */
 final class Wallpaper {
-    /** Pictures in Customize order; R.array.wallpaper_names has "None" and then these. Credits: CREDITS.md. */
+    /** Backgrounds that are not pictures: the theme's colours alone, or the glow in the focused app's colour. */
+    static final int NONE = -2;
+    static final int APP_COLOUR = -1;
+    /** Pictures in Customize order, named by R.array.wallpaper_pictures. Credits: CREDITS.md. */
     static final int[] IMAGES = {R.drawable.wall_milky_way, R.drawable.wall_night_sea,
             R.drawable.wall_sunset_tree, R.drawable.wall_flower, R.drawable.wall_sunflowers};
 

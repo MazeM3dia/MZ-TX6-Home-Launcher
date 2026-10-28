@@ -26,7 +26,6 @@
     <string name="section_look">Look</string>
     <string name="section_home">Home</string>
     <string name="section_debug">Debug build</string>
-    <string name="glow">Colour glow</string>
     <string name="button_labels">Button labels</string>
     <string name="capacity_on_home">Memory and storage</string>
     <string name="animations">Animations</string>
@@ -41,10 +40,15 @@
     <string name="default_home">Choose default home</string>
     <string name="order_reset">App order reset to A–Z</string>
     <string name="wallpaper">Wallpaper</string>
-    <string name="wallpaper_dim">Wallpaper dim</string>
-    <!-- "None", then Wallpaper.IMAGES in order. -->
-    <string-array name="wallpaper_names">
-        <item>None</item>
+    <string name="wallpaper_dim">Dim</string>
+    <string name="bg_none">None</string>
+    <string name="bg_none_detail">The theme\'s colours</string>
+    <string name="bg_app_colour">App colour</string>
+    <string name="bg_app_colour_detail">A glow in the colour of the app in focus</string>
+    <string name="section_pictures">Pictures</string>
+    <string name="section_picture">Picture</string>
+    <!-- Wallpaper.IMAGES in order. -->
+    <string-array name="wallpaper_pictures">
         <item>Milky Way</item>
         <item>Night sea</item>
         <item>Sunset tree</item>

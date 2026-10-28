@@ -210,7 +210,7 @@ public final class MainActivity extends Activity {
         capacity.update();
         amPm.setVisibility(DateFormat.is24HourFormat(this) ? View.GONE : View.VISIBLE);
         updateGreeting();
-        wallpaper.show(prefs.wallpaper(), prefs.wallpaperDim());   // again after onTrimMemory, else nothing
+        wallpaper.show(prefs.background(), prefs.wallpaperDim());   // again after onTrimMemory, else nothing
         if (tilesDropped) {
             tilesDropped = false;
             loadApps();
@@ -629,30 +629,11 @@ public final class MainActivity extends Activity {
                 prefs.setPalette(Math.floorMod(prefs.palette() + step, Palette.count()));
                 applyPalette();
             });
-            String[] walls = getResources().getStringArray(R.array.wallpaper_names);
-            p.choice(getString(R.string.wallpaper), () -> walls[prefs.wallpaper() + 1], step -> {
-                int next = Math.floorMod(prefs.wallpaper() + 1 + step, walls.length) - 1;
-                boolean first = prefs.wallpaper() < 0 && next >= 0;
-                prefs.setWallpaper(next);
-                wallpaper.show(next, prefs.wallpaperDim());
-                // The app-colour glow muddies a photo: off with the first picture; Glow turns it back on.
-                if (first && glow != null) {
-                    prefs.setGlow(false);
-                    applyGlow(false);
-                    p.refresh();
-                }
-            });
-            p.choice(getString(R.string.wallpaper_dim), () -> prefs.wallpaperDim() + "%", step -> {
-                prefs.setWallpaperDim(Math.floorMod(prefs.wallpaperDim() + 20 * step, 80));   // 0 to 60
-                wallpaper.setDim(prefs.wallpaperDim());
-            });
+            p.link(getString(R.string.wallpaper), backgroundName(prefs.background()),
+                    () -> p.push(wallpaperPage));
             p.choice(getString(R.string.apps_per_row), () -> String.valueOf(columns), step -> {
                 prefs.setColumns(4 + Math.floorMod(columns - 4 + step, 4));   // 4 to 7
                 applyColumns();
-            });
-            p.choice(getString(R.string.glow), () -> onOff(glow != null), step -> {
-                prefs.setGlow(glow == null);
-                applyGlow(glow == null);
             });
             p.choice(getString(R.string.button_labels), () -> onOff(prefs.buttonLabels()), step -> {
                 prefs.setButtonLabels(!prefs.buttonLabels());
@@ -713,6 +694,53 @@ public final class MainActivity extends Activity {
             }
         }
     };
+
+    /**
+     * Customize > Wallpaper: one background, ✓ on the chosen one. None and App colour first, then the pictures
+     * and, for a picture, how dim it is drawn. Room for the owner's own pictures later, after Pictures.
+     */
+    private final CustomizePanel.Page wallpaperPage = new CustomizePanel.Page() {
+        @Override
+        public String title() {
+            return getString(R.string.wallpaper);
+        }
+
+        @Override
+        public void build(CustomizePanel p) {
+            int current = prefs.background();
+            p.option(getString(R.string.bg_none), getString(R.string.bg_none_detail), current == Wallpaper.NONE,
+                    () -> pickBackground(p, Wallpaper.NONE));
+            p.option(getString(R.string.bg_app_colour), getString(R.string.bg_app_colour_detail),
+                    current == Wallpaper.APP_COLOUR, () -> pickBackground(p, Wallpaper.APP_COLOUR));
+            p.section(getString(R.string.section_pictures));
+            String[] pictures = getResources().getStringArray(R.array.wallpaper_pictures);
+            for (int i = 0; i < pictures.length; i++) {
+                int index = i;
+                p.option(pictures[i], null, current == i, () -> pickBackground(p, index));
+            }
+            if (current >= 0) {
+                p.section(getString(R.string.section_picture));
+                p.choice(getString(R.string.wallpaper_dim), () -> prefs.wallpaperDim() + "%", step -> {
+                    prefs.setWallpaperDim(Math.floorMod(prefs.wallpaperDim() + 20 * step, 100));   // 0 to 80
+                    wallpaper.setDim(prefs.wallpaperDim());
+                });
+            }
+        }
+    };
+
+    /** Applies a background at once; the page stays open with its ✓ moved (and Dim shown for a picture). */
+    private void pickBackground(CustomizePanel p, int background) {
+        prefs.setBackground(background);
+        applyGlow(background == Wallpaper.APP_COLOUR);
+        wallpaper.show(background, prefs.wallpaperDim());
+        p.refresh();
+    }
+
+    private String backgroundName(int background) {
+        if (background == Wallpaper.NONE) return getString(R.string.bg_none);
+        if (background == Wallpaper.APP_COLOUR) return getString(R.string.bg_app_colour);
+        return getResources().getStringArray(R.array.wallpaper_pictures)[background];
+    }
 
     private final CustomizePanel.Page openOnStartPage = new CustomizePanel.Page() {
         @Override

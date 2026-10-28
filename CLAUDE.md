@@ -15,8 +15,8 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   (JUnit is test-only)
 - `MainActivity`: Home screen (clock, date, network label, Customize and Settings buttons, Favourites row,
   Apps grid), tile menu (Move, favourite, Hide, App info), and the Customize panel's pages
-- `CustomizePanel`: the Customize side panel (built while open, removed on close). Look (theme, apps per row,
-  colour glow, button labels, animations), Home (open on start, hidden apps, reset order, default home),
+- `CustomizePanel`: the Customize side panel (built while open, removed on close). Look (theme, wallpaper, apps per
+  row, button labels, animations), Home (open on start, hidden apps, reset order, default home),
   Waktu solat (show on Home, zone, open the add-on), Debug (demo apps). Every change applies at once, no
   recreate. Left/Right change a value, OK opens or picks, Back goes up then closes
 - `PrayerHeader` + `Prayers`: with the Waktu Solat add-on (addons/waktu-solat), the header shows the Hijri date
@@ -41,9 +41,10 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   Customize > Home > Memory and storage
 - Icons: Lucide (ISC) outlines, stroke 2, converted from the owner's SVGs (ram, storage, customize, settings,
   wifi, ethernet); Waktu Solat uses the same set
-- `Wallpaper`: Customize > Look > Wallpaper / Wallpaper dim. Five built-in pictures in res/drawable-nodpi
-  (the owner's Pixabay picks, CREDITS.md), decoded on the loader in RGB_565 at screen size (~4 MB), dropped in
-  onTrimMemory. The first picture turns the colour glow off
+- `Wallpaper`: Customize > Look > Wallpaper, its own page: one background (HomePrefs.background()): None
+  (theme colours), App colour (the GlowColor glow, formerly its own switch) or one of five built-in pictures in
+  res/drawable-nodpi (the owner's Pixabay picks, CREDITS.md) with Dim 0-80 %. Pictures are decoded on the loader
+  in RGB_565 at screen size (~4 MB), dropped in onTrimMemory. Custom pictures are planned after Pictures
 - `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
   between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)

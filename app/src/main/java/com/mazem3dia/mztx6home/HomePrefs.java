@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The owner's choices: app order, favourites, hidden apps, theme, apps per row, animations, glow, button
+ * The owner's choices: app order, favourites, hidden apps, theme, apps per row, animations, background, button
  * labels and the app to open on start. Packages are stored one per line.
  */
 final class HomePrefs {
@@ -28,6 +28,7 @@ final class HomePrefs {
     private static final String PRAYER_ON_HOME = "prayer_on_home";
     private static final String CAPACITY_ON_HOME = "capacity_on_home";
     private static final String WALLPAPER = "wallpaper";
+    private static final String BACKGROUND = "background";
     private static final String WALLPAPER_DIM = "wallpaper_dim";
 
     private final SharedPreferences prefs;
@@ -64,10 +65,6 @@ final class HomePrefs {
 
     void setAnimations(boolean on) { prefs.edit().putBoolean(ANIMATIONS, on).apply(); }
 
-    /** The background glow in the focused app's colour. */
-    boolean glow() { return prefs.getBoolean(GLOW, true); }
-
-    void setGlow(boolean on) { prefs.edit().putBoolean(GLOW, on).apply(); }
 
     /** Text on the top buttons; off, they are round icons. */
     boolean buttonLabels() { return prefs.getBoolean(BUTTON_LABELS, true); }
@@ -84,12 +81,21 @@ final class HomePrefs {
 
     void setCapacityOnHome(boolean on) { prefs.edit().putBoolean(CAPACITY_ON_HOME, on).apply(); }
 
-    /** Customize > Wallpaper: an index into Wallpaper.IMAGES, or -1 for none (the theme's colours). */
-    int wallpaper() { return prefs.getInt(WALLPAPER, -1); }
+    /**
+     * Customize > Wallpaper: Wallpaper.NONE (the theme's colours), Wallpaper.APP_COLOUR (the glow in the focused
+     * app's colour) or an index into Wallpaper.IMAGES. Before it existed, Colour glow and Wallpaper were two
+     * settings: their values decide the first answer.
+     */
+    int background() {
+        if (prefs.contains(BACKGROUND)) return prefs.getInt(BACKGROUND, Wallpaper.APP_COLOUR);
+        int picture = prefs.getInt(WALLPAPER, -1);
+        if (picture >= 0) return picture;
+        return prefs.getBoolean(GLOW, true) ? Wallpaper.APP_COLOUR : Wallpaper.NONE;
+    }
 
-    void setWallpaper(int index) { prefs.edit().putInt(WALLPAPER, index).apply(); }
+    void setBackground(int background) { prefs.edit().putInt(BACKGROUND, background).apply(); }
 
-    /** How much darker the wallpaper is drawn, in percent: 0, 20, 40 or 60. */
+    /** How much darker a wallpaper picture is drawn, in percent: 0 to 80 in steps of 20. */
     int wallpaperDim() { return prefs.getInt(WALLPAPER_DIM, 40); }
 
     void setWallpaperDim(int percent) { prefs.edit().putInt(WALLPAPER_DIM, percent).apply(); }
