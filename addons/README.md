@@ -9,6 +9,7 @@ launcher's header and Customize panel through its provider, when it is installed
 |---|---|---|---|
 | [capacity-stats](capacity-stats/) | `com.lionlev.tv.capacity` | Free/total RAM and storage | None |
 | [waktu-solat](waktu-solat/) | `com.mazem3dia.waktusolat` | JAKIM's eight times for a zone, in Malay, next prayer counted down, Hijri date; feeds the launcher's header and Customize | `INTERNET`, coarse location (Auto zone only) |
+| [device-report](device-report/) | `com.mazem3dia.devicereport` | Everything the box tells an app (hardware, codecs, Home apps, every app and its permissions), saved as .txt and .json | Network/Wi-Fi/Bluetooth state, storage (Android 9), optional location; logcat/dumpsys only if granted over adb |
 
 ## Changes from the originals
 

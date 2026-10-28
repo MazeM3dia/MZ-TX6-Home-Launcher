@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+
+    <!-- Read-only: network, Wi-Fi and Bluetooth state. No INTERNET: the report never leaves the box. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Android 9 shows the Wi-Fi network name only to apps with location access. Asked for, optional. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Saves the report to Download/. Android 10+ uses MediaStore and needs no permission. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <!-- Android 11+: list every installed app, the point of the report. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+    <!-- Never granted on install. Declared so the owner can opt in from a PC:
+         adb shell pm grant com.mazem3dia.devicereport android.permission.READ_LOGS   (logcat)
+         adb shell pm grant com.mazem3dia.devicereport android.permission.DUMP        (dumpsys)
+         adb shell appops set com.mazem3dia.devicereport GET_USAGE_STATS allow        (app usage) -->
+    <uses-permission android:name="android.permission.READ_LOGS" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.DUMP" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@drawable/icon"
+        android:banner="@drawable/banner"
+        android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <activity android:name=".MainActivity" android:exported="true" android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

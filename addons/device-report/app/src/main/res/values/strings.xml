@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Device Report</string>
+    <string name="about">Everything Android lets an app read about this box, saved as .txt and .json in Download.</string>
+    <string name="create">Create report</string>
+    <string name="again">Create again</string>
+    <string name="reading">Reading…</string>
+    <string name="reading_section">Reading %1$s (%2$d of %3$d)…</string>
+    <string name="title">Device report: %1$s</string>
+    <string name="saved">Saved %1$s (%2$s) and %3$s (%4$s)</string>
+    <string name="failed">Could not finish: %1$s</string>
+    <string name="hint">Press OK on Create report. It takes a few seconds and asks for location (to show the Wi-Fi name) and storage (to save to Download); both are optional.\n\nFor the system log, dumpsys and app usage, grant these once from a PC and create the report again:\n\nadb shell pm grant com.mazem3dia.devicereport android.permission.READ_LOGS\nadb shell pm grant com.mazem3dia.devicereport android.permission.DUMP\nadb shell appops set com.mazem3dia.devicereport GET_USAGE_STATS allow</string>
+</resources>

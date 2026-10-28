@@ -27,6 +27,7 @@ Separate apps in [addons/](addons/). The launcher works without them.
 |---|---|
 | [Waktu Solat](addons/waktu-solat/) | JAKIM e-Solat times for your zone, in Malay: the eight times, the next prayer with a countdown, the Hijri date. Feeds the Home header. |
 | [Capacity Stats](addons/capacity-stats/) | Free and total memory and storage |
+| [Device Report](addons/device-report/) | A full report of the box (hardware, codecs, Home and Settings apps, every app with its permissions), saved as .txt and .json |
 
 ![Waktu Solat](docs/waktu-solat.jpg)
 
