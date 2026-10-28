@@ -36,6 +36,9 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   (about 51 KB each; licence FONT-LICENSE-OFL.txt). Every text uses `Font.Display` (clock, hero),
   `Font.Text` or `Font.Bold` in res/values/themes.xml; the clocks use tabular digits (`tnum`).
   Originals stay outside the repo in ../inbox/inter
+- `Capacity`: free RAM and storage under the header buttons, read by the launcher itself (ActivityManager,
+  StatFs; replaces the Capacity Stats add-on on Home). Clock minute tick; orange below 15 % RAM; Customize >
+  Home > Memory and storage
 - `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
   between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)
