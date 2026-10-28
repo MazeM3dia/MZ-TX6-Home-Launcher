@@ -1,26 +1,32 @@
 package com.mazem3dia.mztx6home;
 
+import android.Manifest;
 import android.animation.ArgbEvaluator;
-import android.annotation.SuppressLint;
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
+import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +38,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
@@ -48,6 +55,11 @@ import java.util.concurrent.Executors;
  * at once: look, apps per row, open on start, hidden apps, default home, and the prayer zone.
  */
 public final class MainActivity extends Activity {
+    /** Customize > Wallpaper > Choose a picture: the permission it asks for, and how many pictures it lists. */
+    private static final String PICTURES_PERMISSION = Build.VERSION.SDK_INT >= 33
+            ? Manifest.permission.READ_MEDIA_IMAGES : Manifest.permission.READ_EXTERNAL_STORAGE;
+    private static final int ASK_PICTURES = 1;
+    private static final int MAX_PICTURES = 100;
     private static final float FOCUS_SCALE = 1.08f;
     private static final int FOCUS_MS = 120;
     private static final int GLOW_MS = 400;
@@ -718,6 +730,12 @@ public final class MainActivity extends Activity {
                 int index = i;
                 p.option(pictures[i], null, current == i, () -> pickBackground(p, index));
             }
+            p.section(getString(R.string.section_custom));
+            if (wallpaper.hasCustom()) {
+                p.option(getString(R.string.bg_custom), prefs.customWallpaperName(), current == Wallpaper.CUSTOM,
+                        () -> pickBackground(p, Wallpaper.CUSTOM));
+            }
+            p.link(getString(R.string.choose_picture), "", MainActivity.this::choosePicture);
             if (current >= 0) {
                 p.section(getString(R.string.section_picture));
                 p.choice(getString(R.string.wallpaper_dim), () -> prefs.wallpaperDim() + "%", step -> {
@@ -736,9 +754,79 @@ public final class MainActivity extends Activity {
         p.refresh();
     }
 
+    /** Customize > Wallpaper > Choose a picture: the box's pictures, once photo access is allowed. */
+    private void choosePicture() {
+        if (checkSelfPermission(PICTURES_PERMISSION) == PackageManager.PERMISSION_GRANTED) {
+            panel.push(picturesPage);
+        } else {
+            requestPermissions(new String[] {PICTURES_PERMISSION}, ASK_PICTURES);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int code, String[] permissions, int[] results) {
+        if (code != ASK_PICTURES) return;
+        boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        if (granted && panel.isOpen()) panel.push(picturesPage);
+        else if (!granted) Toast.makeText(this, R.string.picture_permission, Toast.LENGTH_LONG).show();
+    }
+
+    /** The newest pictures on the box (MediaStore: internal storage and a scanned USB stick), name and folder. */
+    private final CustomizePanel.Page picturesPage = new CustomizePanel.Page() {
+        @Override
+        public String title() {
+            return getString(R.string.choose_picture_title);
+        }
+
+        @Override
+        public void build(CustomizePanel p) {
+            int found = 0;
+            String[] columns = {MediaStore.Images.Media._ID, MediaStore.Images.Media.DISPLAY_NAME,
+                    MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME};
+            try (Cursor c = getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, columns,
+                    null, null, MediaStore.Images.Media.DATE_MODIFIED + " DESC")) {
+                while (c != null && c.moveToNext() && found < MAX_PICTURES) {
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, c.getLong(0));
+                    String name = c.getString(1);
+                    p.option(name, c.getString(2), false, () -> importWallpaper(uri, name));
+                    found++;
+                }
+            } catch (RuntimeException e) {
+                found = 0;   // the media store refused: shown as no pictures
+            }
+            if (found == 0) {
+                p.option(getString(R.string.no_pictures), getString(R.string.no_pictures_detail), false, () -> { });
+            }
+        }
+    };
+
+    /** Copies the picture into the app on the loader thread, then shows it and goes back to Wallpaper. */
+    private void importWallpaper(Uri uri, String name) {
+        Toast.makeText(this, R.string.picture_preparing, Toast.LENGTH_SHORT).show();
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+        File out = Wallpaper.customFile(getFilesDir());
+        loader.execute(() -> {
+            boolean ok = Wallpaper.importPicture(getContentResolver(), uri, out, dm.widthPixels, dm.heightPixels);
+            main.post(() -> {
+                if (!ok) {
+                    Toast.makeText(this, R.string.picture_failed, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                prefs.setCustomWallpaperName(name == null ? "" : name);
+                prefs.setBackground(Wallpaper.CUSTOM);
+                applyGlow(false);
+                wallpaper.release();   // the same CUSTOM slot, a new picture
+                wallpaper.show(Wallpaper.CUSTOM, prefs.wallpaperDim());
+                if (panel.isOpen()) panel.back();
+            });
+        });
+    }
+
     private String backgroundName(int background) {
         if (background == Wallpaper.NONE) return getString(R.string.bg_none);
         if (background == Wallpaper.APP_COLOUR) return getString(R.string.bg_app_colour);
+        if (background == Wallpaper.CUSTOM) return getString(R.string.bg_custom);
         return getResources().getStringArray(R.array.wallpaper_pictures)[background];
     }
 

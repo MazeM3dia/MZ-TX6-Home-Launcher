@@ -6,4 +6,10 @@
     <issue id="IconLauncherShape" severity="ignore" />
     <issue id="IconDensities" severity="ignore" />
     <issue id="IconMissingDensityFolder" severity="ignore" />
+    <!-- Wallpaper reads a photo's rotation with the platform ExifInterface: no AndroidX in this app, and the
+         platform class's stream bugs were fixed in Android 7, below minSdk 26. -->
+    <issue id="ExifInterface" severity="ignore" />
+    <!-- Choose a picture copies one photo; Android 14's "selected photos only" access is not offered (TV boxes
+         run older Android). Lint does not honour tools:ignore on the permission for this check. -->
+    <issue id="SelectedPhotoAccess" severity="ignore" />
 </lint>

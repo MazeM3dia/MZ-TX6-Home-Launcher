@@ -8,6 +8,10 @@
     <!-- The Wi-Fi / Ethernet / Offline label reads the network state. Not INTERNET: the launcher never
          connects to anything. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Customize > Wallpaper > Choose a picture: lists the pictures on the box (and a USB stick) to pick one.
+         Asked for only then; the chosen picture is copied into the app, so Home never needs it to start. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <!-- Android 11+ package visibility (newer boxes, the API 34 emulator): the apps shown as tiles and the
          Settings app. Android 9 on the TX6 ignores this. -->

@@ -44,7 +44,9 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - `Wallpaper`: Customize > Look > Wallpaper, its own page: one background (HomePrefs.background()): None
   (theme colours), App colour (the GlowColor glow, formerly its own switch) or one of five built-in pictures in
   res/drawable-nodpi (the owner's Pixabay picks, CREDITS.md) with Dim 0-80 %. Pictures are decoded on the loader
-  in RGB_565 at screen size (~4 MB), dropped in onTrimMemory. Custom pictures are planned after Pictures
+  in RGB_565 at screen size (~4 MB), dropped in onTrimMemory. Custom: "Choose a picture" lists MediaStore images
+  (internal storage, scanned USB sticks), and Wallpaper.importPicture copies the pick upright and screen-sized
+  to files/custom_wallpaper.jpg (Wallpaper.CUSTOM), so starts need neither the permission nor the original
 - `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
   between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)
@@ -52,7 +54,8 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - Tile menu opens on OK *release* after a hold (first key repeat), or on Menu: a dialog shown while a key is
   still down never gets key focus on Android 9. It is a platform Dialog (style Dialog: see-through, no min width)
   holding a themed card (tile_menu.xml, Palette.menu(), rows from panel_row.xml) so it matches Customize
-- Permissions: ACCESS_NETWORK_STATE only (read-only network state). Never INTERNET: network features live in
+- Permissions: ACCESS_NETWORK_STATE (read-only network state), and read photos (READ_EXTERNAL_STORAGE up to
+  API 32, READ_MEDIA_IMAGES after) asked only by Customize > Wallpaper > Choose a picture. Never INTERNET: network features live in
   add-ons (separate apps), which the launcher reads through their providers
 
 ## Testing

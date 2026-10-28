@@ -29,6 +29,7 @@ final class HomePrefs {
     private static final String CAPACITY_ON_HOME = "capacity_on_home";
     private static final String WALLPAPER = "wallpaper";
     private static final String BACKGROUND = "background";
+    private static final String CUSTOM_NAME = "custom_wallpaper_name";
     private static final String WALLPAPER_DIM = "wallpaper_dim";
 
     private final SharedPreferences prefs;
@@ -94,6 +95,11 @@ final class HomePrefs {
     }
 
     void setBackground(int background) { prefs.edit().putInt(BACKGROUND, background).apply(); }
+
+    /** The file name the custom wallpaper was copied from, shown under "My picture". */
+    String customWallpaperName() { return prefs.getString(CUSTOM_NAME, ""); }
+
+    void setCustomWallpaperName(String name) { prefs.edit().putString(CUSTOM_NAME, name).apply(); }
 
     /** How much darker a wallpaper picture is drawn, in percent: 0 to 80 in steps of 20. */
     int wallpaperDim() { return prefs.getInt(WALLPAPER_DIM, 40); }

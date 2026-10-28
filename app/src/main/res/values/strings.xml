@@ -47,6 +47,15 @@
     <string name="bg_app_colour_detail">A glow in the colour of the app in focus</string>
     <string name="section_pictures">Pictures</string>
     <string name="section_picture">Picture</string>
+    <string name="section_custom">Custom</string>
+    <string name="bg_custom">My picture</string>
+    <string name="choose_picture">Choose a picture</string>
+    <string name="choose_picture_title">Your pictures</string>
+    <string name="no_pictures">No pictures on the box</string>
+    <string name="no_pictures_detail">Copy JPG or PNG files to it (the Pictures or Download folder, or a USB stick), then come back here.</string>
+    <string name="picture_preparing">Preparing the picture…</string>
+    <string name="picture_failed">That picture could not be used</string>
+    <string name="picture_permission">Allow access to photos to choose your own picture</string>
     <!-- Wallpaper.IMAGES in order. -->
     <string-array name="wallpaper_pictures">
         <item>Milky Way</item>
