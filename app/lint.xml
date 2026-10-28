@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The icon and banner are the owner's artwork, one image each: 432 px icon art (xxxhdpi, scaled down by
+     Android) and a 640x360 banner (xhdpi). The icon art fills its square on purpose: it is an adaptive icon's
+     foreground, which Android masks to the launcher's shape. -->
+<lint>
+    <issue id="IconLauncherShape" severity="ignore" />
+    <issue id="IconDensities" severity="ignore" />
+    <issue id="IconMissingDensityFolder" severity="ignore" />
+</lint>

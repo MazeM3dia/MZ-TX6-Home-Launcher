@@ -15,5 +15,5 @@
     <color name="offline">#FFEF5350</color>
     <!-- Screensaver text: dimmer than white, kinder to a screen left on for hours. -->
     <color name="dream_text">#B3FFFFFF</color>
-    <color name="launcher_icon_background">#FF2B6CB0</color>
+    <color name="icon_background">#FF091441</color>
 </resources>
