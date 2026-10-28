@@ -87,6 +87,7 @@ public final class MainActivity extends Activity {
     private CustomizePanel panel;
     private PrayerHeader prayerHeader;
     private Capacity capacity;
+    private Wallpaper wallpaper;
     /** The add-on's last answer while Customize is open: the zone setting. */
     private Bundle prayerInfo;
     /** JAKIM's zones from the add-on, asked for once. */
@@ -173,6 +174,8 @@ public final class MainActivity extends Activity {
         prayerHeader = new PrayerHeader(this, loader, findViewById(R.id.hijri), findViewById(R.id.date),
                 findViewById(R.id.next_prayer));
         prayerHeader.setEnabled(prefs.prayerOnHome() && Prayers.installed(this));
+        wallpaper = new Wallpaper(findViewById(R.id.wallpaper), loader, main);
+        wallpaper.show(prefs.wallpaper(), prefs.wallpaperDim());
         capacity = new Capacity(this, findViewById(R.id.capacity));
         capacity.setEnabled(prefs.capacityOnHome());
         findViewById(R.id.content).getViewTreeObserver().addOnGlobalLayoutListener(this::fitSpacer);
@@ -207,6 +210,7 @@ public final class MainActivity extends Activity {
         capacity.update();
         amPm.setVisibility(DateFormat.is24HourFormat(this) ? View.GONE : View.VISIBLE);
         updateGreeting();
+        wallpaper.show(prefs.wallpaper(), prefs.wallpaperDim());   // again after onTrimMemory, else nothing
         if (tilesDropped) {
             tilesDropped = false;
             loadApps();
@@ -256,7 +260,8 @@ public final class MainActivity extends Activity {
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
         // MODERATE and above arrive only while Home is out of sight and the box is short of memory:
-        // give back the icons and banners, and build them again when Home comes back.
+        // give back the wallpaper, icons and banners, and build them again when Home comes back.
+        if (level >= TRIM_MEMORY_MODERATE) wallpaper.release();
         if (level >= TRIM_MEMORY_MODERATE && installed != null) {
             generation++;
             installed = null;
@@ -623,6 +628,23 @@ public final class MainActivity extends Activity {
             p.choice(getString(R.string.theme), () -> themes[prefs.palette()], step -> {
                 prefs.setPalette(Math.floorMod(prefs.palette() + step, Palette.count()));
                 applyPalette();
+            });
+            String[] walls = getResources().getStringArray(R.array.wallpaper_names);
+            p.choice(getString(R.string.wallpaper), () -> walls[prefs.wallpaper() + 1], step -> {
+                int next = Math.floorMod(prefs.wallpaper() + 1 + step, walls.length) - 1;
+                boolean first = prefs.wallpaper() < 0 && next >= 0;
+                prefs.setWallpaper(next);
+                wallpaper.show(next, prefs.wallpaperDim());
+                // The app-colour glow muddies a photo: off with the first picture; Glow turns it back on.
+                if (first && glow != null) {
+                    prefs.setGlow(false);
+                    applyGlow(false);
+                    p.refresh();
+                }
+            });
+            p.choice(getString(R.string.wallpaper_dim), () -> prefs.wallpaperDim() + "%", step -> {
+                prefs.setWallpaperDim(Math.floorMod(prefs.wallpaperDim() + 20 * step, 80));   // 0 to 60
+                wallpaper.setDim(prefs.wallpaperDim());
             });
             p.choice(getString(R.string.apps_per_row), () -> String.valueOf(columns), step -> {
                 prefs.setColumns(4 + Math.floorMod(columns - 4 + step, 4));   // 4 to 7

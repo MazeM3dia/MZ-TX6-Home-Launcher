@@ -40,6 +40,17 @@
     <string name="off">Off</string>
     <string name="default_home">Choose default home</string>
     <string name="order_reset">App order reset to A–Z</string>
+    <string name="wallpaper">Wallpaper</string>
+    <string name="wallpaper_dim">Wallpaper dim</string>
+    <!-- "None", then Wallpaper.IMAGES in order. -->
+    <string-array name="wallpaper_names">
+        <item>None</item>
+        <item>Milky Way</item>
+        <item>Night sea</item>
+        <item>Sunset tree</item>
+        <item>Flower</item>
+        <item>Sunflowers</item>
+    </string-array>
     <string-array name="palette_names">
         <item>Midnight</item>
         <item>Ocean</item>

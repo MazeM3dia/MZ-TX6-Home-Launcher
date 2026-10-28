@@ -27,6 +27,8 @@ final class HomePrefs {
     private static final String DEMO_APPS = "demo_apps";
     private static final String PRAYER_ON_HOME = "prayer_on_home";
     private static final String CAPACITY_ON_HOME = "capacity_on_home";
+    private static final String WALLPAPER = "wallpaper";
+    private static final String WALLPAPER_DIM = "wallpaper_dim";
 
     private final SharedPreferences prefs;
 
@@ -81,6 +83,16 @@ final class HomePrefs {
     boolean capacityOnHome() { return prefs.getBoolean(CAPACITY_ON_HOME, true); }
 
     void setCapacityOnHome(boolean on) { prefs.edit().putBoolean(CAPACITY_ON_HOME, on).apply(); }
+
+    /** Customize > Wallpaper: an index into Wallpaper.IMAGES, or -1 for none (the theme's colours). */
+    int wallpaper() { return prefs.getInt(WALLPAPER, -1); }
+
+    void setWallpaper(int index) { prefs.edit().putInt(WALLPAPER, index).apply(); }
+
+    /** How much darker the wallpaper is drawn, in percent: 0, 20, 40 or 60. */
+    int wallpaperDim() { return prefs.getInt(WALLPAPER_DIM, 40); }
+
+    void setWallpaperDim(int percent) { prefs.edit().putInt(WALLPAPER_DIM, percent).apply(); }
 
     /** Debug build only: DemoApps' fake tiles added to the real ones. */
     boolean demoApps() { return prefs.getBoolean(DEMO_APPS, false); }

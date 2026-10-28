@@ -7,6 +7,15 @@
      holds the glow and the content, one layer fewer. -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Customize > Wallpaper: a built-in picture under everything (Wallpaper). -->
+    <ImageView
+        android:id="@+id/wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
     <View
         android:id="@+id/glow"
         android:layout_width="match_parent"

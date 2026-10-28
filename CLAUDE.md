@@ -41,6 +41,9 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   Customize > Home > Memory and storage
 - Icons: Lucide (ISC) outlines, stroke 2, converted from the owner's SVGs (ram, storage, customize, settings,
   wifi, ethernet); Waktu Solat uses the same set
+- `Wallpaper`: Customize > Look > Wallpaper / Wallpaper dim. Five built-in pictures in res/drawable-nodpi
+  (the owner's Pixabay picks, CREDITS.md), decoded on the loader in RGB_565 at screen size (~4 MB), dropped in
+  onTrimMemory. The first picture turns the colour glow off
 - `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
   between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)

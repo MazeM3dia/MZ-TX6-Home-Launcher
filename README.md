@@ -14,6 +14,7 @@ Plain Java on the Android framework only: no AndroidX, no libraries, no internet
 - **Customize** side panel: 5 colour themes, apps per row, glow, button labels, animations, open an app on
   start, hidden apps, Waktu Solat zone, set as default Home. Every change applies at once
 - **Network label**: Wi-Fi, Ethernet, orange "No internet", red "Offline"
+- **Wallpaper**: five built-in pictures, with a dim setting so the text stays readable
 - **Clock screensaver** (Settings > Screen saver > MZ TX6 Clock)
 - **Home key** goes back to the tile of the app you left; pressed on Home, it goes to the top
 - Kept clear of the bottom edge of the screen, so things standing in front of the TV don't hide the focus
@@ -62,5 +63,6 @@ The APK is in `app/build/outputs/apk/release/`. Each add-on builds the same way 
   [addons/LICENSE-cleanyourtv.txt](addons/LICENSE-cleanyourtv.txt))
 - [Inter](https://rsms.me/inter/) by Rasmus Andersson (SIL Open Font License, see
   [FONT-LICENSE-OFL.txt](FONT-LICENSE-OFL.txt))
+- Built-in wallpapers from [Pixabay](https://pixabay.com), see [CREDITS.md](CREDITS.md)
 - Prayer times from [JAKIM e-Solat](https://www.e-solat.gov.my)
 - Icons from [Lucide](https://lucide.dev) and [Phosphor](https://phosphoricons.com) (MIT), and Feather
