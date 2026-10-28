@@ -31,6 +31,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -217,6 +218,14 @@ public final class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        // Back from an app (or the screen waking): Home fades in rather than popping up. The window manager's
+        // own animations stay off for Home (themes.xml); this is one alpha animation on the content.
+        if (returning && animations) {
+            View content = findViewById(android.R.id.content);
+            content.setAlpha(0f);
+            content.animate().alpha(1f).setDuration(getResources().getInteger(R.integer.fade_ms))
+                    .setInterpolator(new DecelerateInterpolator()).start();
+        }
         network.start();
         prayerHeader.start();
         capacity.update();
@@ -1179,6 +1188,8 @@ public final class MainActivity extends Activity {
     private void start(Intent intent, String failure, String pkg) {
         try {
             startActivity(intent);
+            // The app fades in over Home instead of the box's default open animation.
+            if (animations) overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             lastLaunched = pkg;
         } catch (ActivityNotFoundException | SecurityException e) {
             Toast.makeText(this, failure, Toast.LENGTH_SHORT).show();
