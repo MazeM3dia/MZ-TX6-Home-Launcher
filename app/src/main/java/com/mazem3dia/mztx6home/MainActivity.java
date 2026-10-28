@@ -1,9 +1,9 @@
 package com.mazem3dia.mztx6home;
 
 import android.animation.ArgbEvaluator;
+import android.annotation.SuppressLint;
 import android.animation.ValueAnimator;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -24,8 +24,10 @@ import android.text.format.DateFormat;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -480,23 +482,41 @@ public final class MainActivity extends Activity {
 
     // ----- Tile menu: move, favourite, hide, app info -----
 
+    @SuppressLint("InflateParams") // a dialog's content has no parent to inflate into
     private void showTileMenu(View tile) {
         AppEntry app = (AppEntry) tile.getTag();
         boolean inDock = tile.getParent() == dock;
-        String[] items = {
-                getString(R.string.move),
-                getString(inDock ? R.string.remove_favourite : R.string.add_favourite),
-                getString(R.string.hide),
-                getString(R.string.app_info),
-        };
-        showDialog(new AlertDialog.Builder(this, R.style.Dialog)
-                .setTitle(app.label)
-                .setItems(items, (d, which) -> {
-                    if (which == 0) startMove(tile);
-                    else if (which == 1) setFavourite(app, !inDock);
-                    else if (which == 2) hide(app);
-                    else openAppInfo(app);
-                }));
+        LayoutInflater inflater = LayoutInflater.from(this);
+        LinearLayout card = (LinearLayout) inflater.inflate(R.layout.tile_menu, null);
+        card.setBackground(palette.menu());
+        ((TextView) card.findViewById(R.id.menu_title)).setText(app.label);
+        // Still a platform Dialog underneath: its window takes key focus reliably on Android 9.
+        Dialog menu = new Dialog(this, R.style.Dialog);
+        menuRow(menu, card, inflater, getString(R.string.move), () -> startMove(tile));
+        menuRow(menu, card, inflater, getString(inDock ? R.string.remove_favourite : R.string.add_favourite),
+                () -> setFavourite(app, !inDock));
+        menuRow(menu, card, inflater, getString(R.string.hide), () -> hide(app));
+        menuRow(menu, card, inflater, getString(R.string.app_info), () -> openAppInfo(app));
+        // Inflated without a parent, the card loses its XML width: give it back here.
+        menu.setContentView(card, new ViewGroup.LayoutParams(
+                getResources().getDimensionPixelSize(R.dimen.menu_width), ViewGroup.LayoutParams.WRAP_CONTENT));
+        dismissDialog();
+        dialog = menu;
+        menu.show();
+        card.getChildAt(1).requestFocus();
+    }
+
+    /** One tile-menu row, built like a Customize row: OK closes the menu and runs the action. */
+    private void menuRow(Dialog menu, LinearLayout card, LayoutInflater inflater, String label, Runnable action) {
+        View row = inflater.inflate(R.layout.panel_row, card, false);
+        ((TextView) row.findViewById(R.id.row_label)).setText(label);
+        row.findViewById(R.id.row_value).setVisibility(View.GONE);
+        row.setBackground(palette.row());
+        row.setOnClickListener(v -> {
+            menu.dismiss();
+            action.run();
+        });
+        card.addView(row);
     }
 
     private void startMove(View tile) {
@@ -1034,11 +1054,6 @@ public final class MainActivity extends Activity {
     }
 
     // ----- Helpers -----
-
-    private void showDialog(AlertDialog.Builder builder) {
-        dismissDialog();
-        dialog = builder.show();
-    }
 
     private void dismissDialog() {
         if (dialog != null) dialog.dismiss();

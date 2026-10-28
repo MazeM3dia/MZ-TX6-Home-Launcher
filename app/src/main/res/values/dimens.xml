@@ -30,6 +30,8 @@
     <dimen name="focus_margin_bottom">96dp</dimen>
     <!-- Customize panel: about a third of the TX6's 1442 dp width. -->
     <dimen name="panel_width">520dp</dimen>
+    <dimen name="menu_width">400dp</dimen>
+    <dimen name="menu_title">24sp</dimen>
     <dimen name="panel_title">24sp</dimen>
     <dimen name="panel_row_radius">12dp</dimen>
     <!-- Button labels off: round icon buttons. -->

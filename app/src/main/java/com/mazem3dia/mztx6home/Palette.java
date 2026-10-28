@@ -98,6 +98,11 @@ final class Palette {
         return new ColorDrawable((colors[1] & 0xFFFFFF) | 0xF5000000);
     }
 
+    /** The tile menu: the Customize panel's colour as a rounded card with a hairline border. */
+    Drawable menu() {
+        return shape((colors[1] & 0xFFFFFF) | 0xF5000000, hairline, BAND_BORDER, bandRadius);
+    }
+
     /** A Customize row: see-through white while focused. */
     Drawable row() {
         StateListDrawable row = new StateListDrawable();

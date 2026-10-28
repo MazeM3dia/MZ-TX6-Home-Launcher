@@ -46,7 +46,8 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)
 - Tile width comes from the screen width and `res/values/integers.xml` columns, so any density fills the row
 - Tile menu opens on OK *release* after a hold (first key repeat), or on Menu: a dialog shown while a key is
-  still down never gets key focus on Android 9
+  still down never gets key focus on Android 9. It is a platform Dialog (style Dialog: see-through, no min width)
+  holding a themed card (tile_menu.xml, Palette.menu(), rows from panel_row.xml) so it matches Customize
 - Permissions: ACCESS_NETWORK_STATE only (read-only network state). Never INTERNET: network features live in
   add-ons (separate apps), which the launcher reads through their providers
 

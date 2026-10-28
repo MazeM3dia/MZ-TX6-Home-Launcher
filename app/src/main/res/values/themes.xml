@@ -53,8 +53,13 @@
         <item name="android:textColor">@color/text_secondary</item>
     </style>
 
-    <!-- Tile menu and Customize dialogs: the platform's dark dialog, which the D-pad already drives. -->
-    <style name="Dialog" parent="@android:style/Theme.Material.Dialog.Alert">
+    <!-- The tile menu's window: floating, dimmed behind, see-through so the themed card (tile_menu) is all
+         that shows, and no minimum width. -->
+    <style name="Dialog" parent="@android:style/Theme.Material.Dialog.NoActionBar">
         <item name="android:fontFamily">@font/inter_display_regular</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowMinWidthMajor">0dp</item>
+        <item name="android:windowMinWidthMinor">0dp</item>
+        <item name="android:backgroundDimAmount">0.5</item>
     </style>
 </resources>
