@@ -36,9 +36,11 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   (about 51 KB each; licence FONT-LICENSE-OFL.txt). Every text uses `Font.Display` (clock, hero),
   `Font.Text` or `Font.Bold` in res/values/themes.xml; the clocks use tabular digits (`tnum`).
   Originals stay outside the repo in ../inbox/inter
-- `Capacity`: free RAM and storage under the header buttons, read by the launcher itself (ActivityManager,
-  StatFs; replaces the Capacity Stats add-on on Home). Clock minute tick; orange below 15 % RAM; Customize >
-  Home > Memory and storage
+- `Capacity`: RAM and storage in use under the header buttons, "[icon] 0.7GB/2.0GB · [icon] 0.2GB/5.8GB",
+  read by the launcher itself (ActivityManager, StatFs). Clock minute tick; orange above 85 % RAM in use;
+  Customize > Home > Memory and storage
+- Icons: Lucide (ISC) outlines, stroke 2, converted from the owner's SVGs (ram, storage, customize, settings,
+  wifi, ethernet); Waktu Solat uses the same set
 - `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
   between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)

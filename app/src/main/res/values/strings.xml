@@ -29,8 +29,6 @@
     <string name="glow">Colour glow</string>
     <string name="button_labels">Button labels</string>
     <string name="capacity_on_home">Memory and storage</string>
-    <!-- Under the header buttons: free RAM of total, free storage of total. -->
-    <string name="capacity">RAM %1$s of %2$s free · Storage %3$s of %4$s free</string>
     <string name="animations">Animations</string>
     <string name="on">On</string>
     <string name="panel_hint">◀ ▶ change   ·   Back to return</string>
