@@ -5,7 +5,7 @@ Maghrib and Isyak, the next prayer highlighted and counted down, and today's Gre
 reads the same data for its header (Hijri date, next prayer) and sets the zone from its Customize panel.
 
 Rewritten from the [Prayer Times](https://github.com/Gathin23/cleanyourtv/tree/main/addons/prayer-times) add-on by
-[@majnioui](https://github.com/majnioui) (MIT): same page layout and prayer icons (Lucide, ISC; Feather, MIT).
+[@majnioui](https://github.com/majnioui) (MIT): same page layout; the prayer icons are now all Lucide (ISC), and the icon and banner are the project's own.
 
 ## Data
 

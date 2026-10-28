@@ -1,9 +1,10 @@
 # Add-ons
 
-Small separate TV apps, copied from the cleanyourtv repo's `addons/` (MIT, see `LICENSE-cleanyourtv.txt`;
-each add-on's own README lists its author and credits). They are ordinary apps: MZ TX6 Home shows each as a
-normal tile and works without any of them; each is built and installed on its own. Waktu Solat also feeds the
-launcher's header and Customize panel through its provider, when it is installed.
+Small separate TV apps. Waktu Solat and Capacity Stats are copied from the cleanyourtv repo's `addons/` (MIT, see
+`LICENSE-cleanyourtv.txt`; each add-on's own README lists its author and credits); Device Report is new. They
+are ordinary apps, each built and installed on its own, and MZ TX6 Home works without any of them. In MZ TX6
+Home, Waktu Solat has a tile and feeds the header and Customize through its provider; Device Report and
+Capacity Stats have no tile and open from Customize > Add-ons. Other launchers list all three as normal apps.
 
 | Add-on | Package | What it does | Permissions |
 |---|---|---|---|
@@ -17,7 +18,9 @@ launcher's header and Customize panel through its provider, when it is installed
   Gradle 8.11.1 (wrapper copied from the launcher; capacity-stats shipped without one), compileSdk 35.
   minSdk 26 and targetSdk 34 are unchanged.
 - waktu-solat: rewritten from @majnioui's Prayer Times for Malaysia. Data from JAKIM e-Solat instead of Aladhan,
-  Malay names and dates, Inter Display font, a provider for the launcher, new banner. See its README.
+  Malay names and dates, Inter Display font, a provider for the launcher, Lucide card icons. See its README.
+- All three: the project's own icon and TV banner (adaptive icon from 432 px art, 640x360 banner), and a label on
+  the launcher activity so simple launchers don't show the package name.
 
 ## Build and install
 

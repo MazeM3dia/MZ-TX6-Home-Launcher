@@ -50,4 +50,4 @@ adb shell appops set com.mazem3dia.devicereport GET_USAGE_STATS allow
 JAVA_HOME=~/.jdks/jbr-21.0.11 ./gradlew --no-daemon testReleaseUnitTest assembleRelease lintRelease
 ```
 
-Package `com.mazem3dia.devicereport`. Font: Inter Display (SIL OFL, `FONT-LICENSE-OFL.txt`). Icon: Lucide cpu (ISC).
+Package `com.mazem3dia.devicereport`. Font: Inter Display (SIL OFL, `FONT-LICENSE-OFL.txt`). Icon and banner: the project's own artwork.
