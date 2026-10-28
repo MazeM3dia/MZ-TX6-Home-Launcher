@@ -168,14 +168,14 @@ public final class MainActivity extends Activity {
         settings.setOnClickListener(v -> openSettings());
         if (!prefs.buttonLabels()) iconOnly(customizeButton, settings, networkPill);
         setAnimations(prefs.animations());
-        if (prefs.glow()) setUpGlow();
+        if (prefs.background() == Wallpaper.APP_COLOUR) setUpGlow();
         panel = new CustomizePanel(this, findViewById(android.R.id.content), findViewById(R.id.home));
         panel.setPalette(palette, animations);
         prayerHeader = new PrayerHeader(this, loader, findViewById(R.id.hijri), findViewById(R.id.date),
                 findViewById(R.id.next_prayer));
         prayerHeader.setEnabled(prefs.prayerOnHome() && Prayers.installed(this));
         wallpaper = new Wallpaper(findViewById(R.id.wallpaper), loader, main);
-        wallpaper.show(prefs.wallpaper(), prefs.wallpaperDim());
+        wallpaper.show(prefs.background(), prefs.wallpaperDim());
         capacity = new Capacity(this, findViewById(R.id.capacity));
         capacity.setEnabled(prefs.capacityOnHome());
         findViewById(R.id.content).getViewTreeObserver().addOnGlobalLayoutListener(this::fitSpacer);
