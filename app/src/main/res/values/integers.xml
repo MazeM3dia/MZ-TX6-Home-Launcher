@@ -3,5 +3,5 @@
     <!-- Tiles per row. Their width is worked out from the screen, so any density fills the row. -->
     <integer name="columns">5</integer>
     <!-- Fade between Home and an app, both ways (Customize > Animations). -->
-    <integer name="fade_ms">180</integer>
+    <integer name="fade_ms">300</integer>
 </resources>
