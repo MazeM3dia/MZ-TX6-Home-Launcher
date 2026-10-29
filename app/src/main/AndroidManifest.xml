@@ -13,6 +13,8 @@
          Asked for only then; the chosen picture is copied into the app, so Home never needs it to start. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- BootReceiver: brings Home up after boot, where the firmware opens its own launcher first. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Android 11+ package visibility (newer boxes, the API 34 emulator): the apps shown as tiles and the
          Settings app. Android 9 on the TX6 ignores this. -->
@@ -73,6 +75,16 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- After boot, Home comes up even where the firmware opens AliceUX first; only when this launcher is the
+             default Home. Low priority: runs after the other apps' boot receivers. -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="false">
+            <intent-filter android:priority="-999">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Screensaver: pick "MZ TX6 Clock" in Settings > Screen saver. Started by Android only when the box
              is idle, never by the launcher. -->
