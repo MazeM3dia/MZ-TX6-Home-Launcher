@@ -24,6 +24,9 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   (content://com.mazem3dia.waktusolat), so the launcher keeps no INTERNET permission
 - Home key: back from an app focuses that app's tile; pressed on Home, back to the top. Open on start opens
   its app once per boot (Settings.Global.BOOT_COUNT, else boot time in minutes)
+- `BootReceiver`: after BOOT_COMPLETED (priority -999) brings Home up at 1 s and 5 s (the 5 s one skipped when an
+  app opens on start), only while this launcher is the default Home. The TX6 opened AliceUX after a power cut
+  despite "Always" (1.3-test2)
 - `AppLoader`: finds LAUNCHER and LEANBACK_LAUNCHER apps; `AppEntry`: one tile
 - `Arrangement`: order and move logic on package names, unit-tested in `app/src/test`
 - `HomePrefs`: owner's choices in SharedPreferences; `Palette`: 5 colour themes, see-through pills and the
