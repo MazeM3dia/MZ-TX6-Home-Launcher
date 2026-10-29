@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -56,6 +57,10 @@ import java.util.concurrent.Executors;
  * at once: look, apps per row, open on start, hidden apps, default home, and the prayer zone.
  */
 public final class MainActivity extends Activity {
+    /** TV Settings apps: AOSP, Amlogic (DroidLogic) and Allwinner (Softwinner). */
+    private static final String[] TV_SETTINGS = {
+            "com.android.tv.settings", "com.droidlogic.tv.settings", "com.softwinner.tvdsetting"};
+    private static final String PHONE_SETTINGS = "com.android.settings";
     /** Customize > Wallpaper > Choose a picture: the permission it asks for, and how many pictures it lists. */
     private static final String PICTURES_PERMISSION = Build.VERSION.SDK_INT >= 33
             ? Manifest.permission.READ_MEDIA_IMAGES : Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -1155,9 +1160,27 @@ public final class MainActivity extends Activity {
                 getString(R.string.open_prayer)), Prayers.PACKAGE);
     }
 
+    /**
+     * The TV's own Settings where the box has one. Boxes like the TX6 carry both the phone Settings and a TV
+     * Settings app, and Android's "open Settings" request lands on the phone one. So: a known TV Settings
+     * app first, then any other Settings app with a TV (leanback) entry, then whatever answers the request.
+     */
     private void openSettings() {
-        start(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                getString(R.string.cannot_open_settings), null);
+        PackageManager pm = getPackageManager();
+        Intent intent = null;
+        for (int i = 0; intent == null && i < TV_SETTINGS.length; i++) {
+            intent = pm.getLeanbackLaunchIntentForPackage(TV_SETTINGS[i]);
+        }
+        if (intent == null) {
+            for (ResolveInfo info : pm.queryIntentActivities(new Intent(Settings.ACTION_SETTINGS), 0)) {
+                String pkg = info.activityInfo.packageName;
+                if (pkg.equals(PHONE_SETTINGS)) continue;
+                intent = pm.getLeanbackLaunchIntentForPackage(pkg);
+                if (intent != null) break;
+            }
+        }
+        if (intent == null) intent = new Intent(Settings.ACTION_SETTINGS);
+        start(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), getString(R.string.cannot_open_settings), null);
     }
 
     /**
