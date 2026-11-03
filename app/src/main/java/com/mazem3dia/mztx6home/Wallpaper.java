@@ -1,6 +1,7 @@
 package com.mazem3dia.mztx6home;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -48,11 +49,24 @@ final class Wallpaper {
         this.view = view;
         this.loader = loader;
         this.main = main;
-        this.customFile = customFile(view.getContext().getFilesDir());
+        this.customFile = customFile(view.getContext());
     }
 
-    static File customFile(File filesDir) {
-        return new File(filesDir, "custom_wallpaper.jpg");
+    private static final String CUSTOM_NAME = "custom_wallpaper.jpg";
+
+    /** In device-protected storage, like HomePrefs: Home shows it before the box unlocks its storage. */
+    static File customFile(Context context) {
+        return new File(context.createDeviceProtectedStorageContext().getFilesDir(), CUSTOM_NAME);
+    }
+
+    /** HomePrefs.migrate: the picture 1.3-test2 and older kept in normal storage. True when it moved. */
+    static boolean migrate(Context context) {
+        File old = new File(context.getFilesDir(), CUSTOM_NAME);
+        if (!old.isFile()) return false;
+        File now = customFile(context);
+        File dir = now.getParentFile();
+        if (dir != null && !dir.isDirectory() && !dir.mkdirs()) return false;
+        return old.renameTo(now);
     }
 
     boolean hasCustom() {

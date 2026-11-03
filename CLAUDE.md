@@ -8,7 +8,8 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - 1920x1080 at 213 dpi (1442x811 dp); D-pad remote, no touch
 - Firmware: p281-userdebug test-keys; reports manufacturer "Amlogic" (wrong)
 - Inputs: HDMI out, AV out, Wi-Fi, Ethernet, USB. No tuner or HDMI in, so no Inputs/Live TV feature
-- Stock launcher: AliceUX (package to be confirmed)
+- Stock launcher: AliceUX, package com.oranth.tvlauncher (directBootAware). Disabled on the box over ADB on
+  2026-11-02 (`pm disable-user --user 0 com.oranth.tvlauncher`); undo: `pm enable com.oranth.tvlauncher`
 
 ## Code
 - Package `com.mazem3dia.mztx6home`. Plain Java, Android framework only: no AndroidX, no app dependencies
@@ -27,6 +28,14 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
 - `BootReceiver`: after BOOT_COMPLETED (priority -999) brings Home up at 1 s and 5 s (the 5 s one skipped when an
   app opens on start), only while this launcher is the default Home. The TX6 opened AliceUX after a power cut
   despite "Always" (1.3-test2)
+- Direct boot: MainActivity is directBootAware. On a cold boot Android starts Home before the storage unlocks and
+  then only offers Home apps that can run that early, so AliceUX (directBootAware) won after every power cut.
+  HomePrefs and the custom wallpaper live in device-protected storage (HomePrefs.migrate moves 1.3-test2 data
+  once, when unlocked). Until ACTION_USER_UNLOCKED only direct-boot-aware apps are listed and the add-ons'
+  providers are unreachable: MainActivity loads the apps again then, and runs Open on start only after unlock
+- Settings button: Customize > Home > Settings app, TV (default: TV_SETTINGS packages, leanback or launcher entry,
+  else their ACTION_SETTINGS answer; on the TX6 com.android.tv.settings/.MainSettings) or Android
+  (com.android.settings); falls back to plain ACTION_SETTINGS
 - `AppLoader`: finds LAUNCHER and LEANBACK_LAUNCHER apps; `AppEntry`: one tile
 - `Arrangement`: order and move logic on package names, unit-tested in `app/src/test`
 - `HomePrefs`: owner's choices in SharedPreferences; `Palette`: 5 colour themes, see-through pills and the
@@ -50,7 +59,8 @@ The cleanyourtv copy in ../cleanyourtv-main is REFERENCE ONLY: read it, borrow i
   in RGB_565 at screen size (~4 MB), dropped in onTrimMemory. Custom: "Choose a picture" lists MediaStore images
   (internal storage, scanned USB sticks), and Wallpaper.importPicture copies the pick upright and screen-sized
   to files/custom_wallpaper.jpg (Wallpaper.CUSTOM), so starts need neither the permission nor the original
-- `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; listens only
+- `NetworkStatus`: Wi-Fi/Ethernet label, orange "No internet" (not VALIDATED), red "Offline"; with a VPN
+  (1.1.1.1 DNS/WARP) as default network it shows the network underneath plus "· VPN", and "· DNS" while Private DNS (DNS over TLS) is active (LinkProperties.isPrivateDnsActive, API 28+); labels off: icon + "VPN · DNS"; listens only
   between onStart and onStop
 - `ClockDream`: screensaver (Settings > Screen saver > MZ TX6 Clock)
 - Tile width comes from the screen width and `res/values/integers.xml` columns, so any density fills the row

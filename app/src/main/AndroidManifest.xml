@@ -51,9 +51,14 @@
         android:supportsRtl="true">
 
         <!-- The label on the activity too: simple stock launchers (and some Settings screens) read only the
-             activity's own label and show the package name when it is missing. -->
+             activity's own label and show the package name when it is missing.
+             directBootAware: on a cold boot Android starts Home before the storage is unlocked, and then offers
+             only Home apps that can run that early. The TX6's AliceUX (com.oranth.tvlauncher) can, so it won over
+             this launcher after every power cut. Everything Home reads at start lives in device-protected
+             storage (HomePrefs, Wallpaper); apps and add-ons that can't run early load again on unlock. -->
         <activity
             android:name=".MainActivity"
+            android:directBootAware="true"
             android:label="@string/app_name"
             tools:ignore="RedundantLabel"
             android:exported="true"

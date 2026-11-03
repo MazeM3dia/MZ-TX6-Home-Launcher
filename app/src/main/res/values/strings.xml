@@ -7,6 +7,8 @@
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
     <string name="greeting_night">Good night</string>
+    <!-- "Good morning, Living Room TX6": the greeting and the box's device name. -->
+    <string name="greeting_with_name">%1$s, %2$s</string>
     <string name="apps">Apps</string>
     <string name="options_hint">Hold OK for options</string>
     <string name="no_apps">No apps found</string>
@@ -38,6 +40,10 @@
     <string name="open_on_start">Open on start</string>
     <string name="off">Off</string>
     <string name="default_home">Choose default home</string>
+    <!-- Customize > Settings app: what the Settings button opens. -->
+    <string name="settings_app">Settings app</string>
+    <string name="settings_app_tv">TV</string>
+    <string name="settings_app_android">Android</string>
     <string name="order_reset">App order reset to A–Z</string>
     <string name="wallpaper">Wallpaper</string>
     <string name="wallpaper_dim">Dim</string>
@@ -99,6 +105,10 @@
     <string name="network_other">Online</string>
     <string name="network_offline">Offline</string>
     <string name="network_no_internet">No internet</string>
+    <!-- After the link: a VPN (1.1.1.1 WARP and the like) on top, Private DNS (DNS over TLS) in use. -->
+    <string name="network_vpn">VPN</string>
+    <string name="network_dns">DNS</string>
+    <string name="network_with">%1$s · %2$s</string>
 
     <!-- Screensaver, as listed in the box\'s Settings > Screen saver -->
     <string name="dream_name">MZ TX6 Clock</string>

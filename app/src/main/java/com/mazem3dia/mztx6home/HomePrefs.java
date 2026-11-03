@@ -2,7 +2,9 @@ package com.mazem3dia.mztx6home;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.UserManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,10 +34,42 @@ final class HomePrefs {
     private static final String CUSTOM_NAME = "custom_wallpaper_name";
     private static final String WALLPAPER_DIM = "wallpaper_dim";
 
+    private static final String SETTINGS_APP = "settings_app";
+    /** Customize > Settings app: the TV's own Settings (default) or Android's full phone-style one. */
+    static final String SETTINGS_TV = "tv";
+    static final String SETTINGS_ANDROID = "android";
+
+    private static final String FILE = "home";
+    /** migrate() has run in this process with the storage unlocked. */
+    private static boolean migrated;
+
     private final SharedPreferences prefs;
 
+    /**
+     * In device-protected storage: Home starts before the box unlocks its storage on a cold boot
+     * (directBootAware), and only this storage can be read that early.
+     */
     HomePrefs(Context context) {
-        prefs = context.getSharedPreferences("home", Context.MODE_PRIVATE);
+        migrate(context);
+        prefs = context.createDeviceProtectedStorageContext().getSharedPreferences(FILE, Context.MODE_PRIVATE);
+    }
+
+    /**
+     * Moves what 1.3-test2 and older saved in normal storage (choices, custom wallpaper) to device-protected
+     * storage, once, when the storage is unlocked. True when something moved: a HomePrefs made before that holds
+     * the old values, so Home starts again.
+     */
+    static synchronized boolean migrate(Context context) {
+        if (migrated) return false;
+        UserManager users = context.getSystemService(UserManager.class);
+        if (users != null && !users.isUserUnlocked()) return false;
+        migrated = true;
+        Context device = context.createDeviceProtectedStorageContext();
+        boolean moved = false;
+        if (new File(context.getDataDir(), "shared_prefs/" + FILE + ".xml").isFile()) {
+            moved = device.moveSharedPreferencesFrom(context, FILE);
+        }
+        return Wallpaper.migrate(context) || moved;
     }
 
     /** The Apps grid order the owner set with Move; empty means A to Z. */
@@ -66,6 +100,11 @@ final class HomePrefs {
 
     void setAnimations(boolean on) { prefs.edit().putBoolean(ANIMATIONS, on).apply(); }
 
+
+    /** SETTINGS_TV or SETTINGS_ANDROID: what the Settings button opens. */
+    String settingsApp() { return prefs.getString(SETTINGS_APP, SETTINGS_TV); }
+
+    void setSettingsApp(String app) { prefs.edit().putString(SETTINGS_APP, app).apply(); }
 
     /** Text on the top buttons; off, they are round icons. */
     boolean buttonLabels() { return prefs.getBoolean(BUTTON_LABELS, true); }

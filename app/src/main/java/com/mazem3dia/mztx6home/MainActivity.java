@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.Editable;
@@ -147,6 +148,25 @@ public final class MainActivity extends Activity {
         }
     };
 
+    /**
+     * Cold boot: Home starts before the box unlocks its storage (directBootAware). Until then Android lists only
+     * apps that can run that early and the add-ons' providers are out of reach, so on unlock the tiles and the
+     * prayer header load again and Open on start gets its turn.
+     */
+    private boolean waitingForUnlock;
+    private final BroadcastReceiver userUnlocked = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            stopWaitingForUnlock();
+            if (HomePrefs.migrate(MainActivity.this)) {
+                recreate();   // the owner's choices just moved into device-protected storage: read them again
+                return;
+            }
+            loadApps();
+            openOnStart();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -217,7 +237,18 @@ public final class MainActivity extends Activity {
         filter.addDataScheme("package");
         registerReceiver(packagesChanged, filter);
         loadApps();
-        openOnStart();
+        if (getSystemService(UserManager.class).isUserUnlocked()) {
+            openOnStart();
+        } else {
+            waitingForUnlock = true;
+            registerReceiver(userUnlocked, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
+        }
+    }
+
+    private void stopWaitingForUnlock() {
+        if (!waitingForUnlock) return;
+        waitingForUnlock = false;
+        unregisterReceiver(userUnlocked);
     }
 
     @Override
@@ -304,6 +335,7 @@ public final class MainActivity extends Activity {
         dismissDialog();
         panel.close();
         unregisterReceiver(packagesChanged);
+        stopWaitingForUnlock();
         main.removeCallbacksAndMessages(null);
         loader.shutdownNow();
         super.onDestroy();
@@ -681,6 +713,11 @@ public final class MainActivity extends Activity {
             int hiddenCount = hiddenApps().size();
             p.link(getString(R.string.hidden_apps), hiddenCount > 0 ? String.valueOf(hiddenCount) : "",
                     () -> p.push(hiddenPage));
+            p.choice(getString(R.string.settings_app), () -> getString(
+                    HomePrefs.SETTINGS_ANDROID.equals(prefs.settingsApp())
+                            ? R.string.settings_app_android : R.string.settings_app_tv), step ->
+                    prefs.setSettingsApp(HomePrefs.SETTINGS_ANDROID.equals(prefs.settingsApp())
+                            ? HomePrefs.SETTINGS_TV : HomePrefs.SETTINGS_ANDROID));
             p.action(getString(R.string.reset_order), MainActivity.this::resetOrder);
             p.action(getString(R.string.default_home), () -> {
                 p.close();
@@ -819,7 +856,7 @@ public final class MainActivity extends Activity {
         Toast.makeText(this, R.string.picture_preparing, Toast.LENGTH_SHORT).show();
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getRealMetrics(dm);
-        File out = Wallpaper.customFile(getFilesDir());
+        File out = Wallpaper.customFile(this);
         loader.execute(() -> {
             boolean ok = Wallpaper.importPicture(getContentResolver(), uri, out, dm.widthPixels, dm.heightPixels);
             main.post(() -> {
@@ -1073,11 +1110,21 @@ public final class MainActivity extends Activity {
         return new int[] {(none ? 0 : GLOW_STRONG) << 24 | rgb, (none ? 0 : GLOW_SOFT) << 24 | rgb, rgb};
     }
 
+    /** "Good morning, <device name>", on every start and minute tick, so a renamed box shows its new name. */
     private void updateGreeting() {
         int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        greeting.setText(hour < 5 ? R.string.greeting_night : hour < 12 ? R.string.greeting_morning
+        String hello = getString(hour < 5 ? R.string.greeting_night : hour < 12 ? R.string.greeting_morning
                 : hour < 17 ? R.string.greeting_afternoon : hour < 22 ? R.string.greeting_evening
                 : R.string.greeting_night);
+        String name = deviceName();
+        greeting.setText(name.isEmpty() ? hello : getString(R.string.greeting_with_name, hello, name));
+    }
+
+    /** The name set in the box's Settings (About > Device name), else its model; "" if it has neither. */
+    private String deviceName() {
+        String name = Settings.Global.getString(getContentResolver(), Settings.Global.DEVICE_NAME);
+        if (name == null || name.trim().isEmpty()) name = Build.MODEL;
+        return name == null ? "" : name.trim();
     }
 
     /** Button labels off: round icon buttons; the words stay as what a screen reader says. */
@@ -1161,26 +1208,44 @@ public final class MainActivity extends Activity {
     }
 
     /**
-     * The TV's own Settings where the box has one. Boxes like the TX6 carry both the phone Settings and a TV
-     * Settings app, and Android's "open Settings" request lands on the phone one. So: a known TV Settings
-     * app first, then any other Settings app with a TV (leanback) entry, then whatever answers the request.
+     * Customize > Settings app picks which one: the TV's own Settings (default; made for the remote) or Android's
+     * phone-style Settings (everything, Developer options included). Boxes like the TX6 carry both, and Android's
+     * "open Settings" request lands on the phone one. Whatever answers that request is the fallback.
      */
     private void openSettings() {
         PackageManager pm = getPackageManager();
-        Intent intent = null;
-        for (int i = 0; intent == null && i < TV_SETTINGS.length; i++) {
-            intent = pm.getLeanbackLaunchIntentForPackage(TV_SETTINGS[i]);
-        }
-        if (intent == null) {
-            for (ResolveInfo info : pm.queryIntentActivities(new Intent(Settings.ACTION_SETTINGS), 0)) {
-                String pkg = info.activityInfo.packageName;
-                if (pkg.equals(PHONE_SETTINGS)) continue;
-                intent = pm.getLeanbackLaunchIntentForPackage(pkg);
-                if (intent != null) break;
-            }
-        }
+        Intent intent = HomePrefs.SETTINGS_ANDROID.equals(prefs.settingsApp())
+                ? settingsIn(pm, PHONE_SETTINGS) : tvSettings(pm);
         if (intent == null) intent = new Intent(Settings.ACTION_SETTINGS);
         start(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), getString(R.string.cannot_open_settings), null);
+    }
+
+    /** A known TV Settings app first, then any other Settings app with a TV (leanback) entry; null if none. */
+    private static Intent tvSettings(PackageManager pm) {
+        for (String pkg : TV_SETTINGS) {
+            Intent intent = settingsIn(pm, pkg);
+            if (intent != null) return intent;
+        }
+        for (ResolveInfo info : pm.queryIntentActivities(new Intent(Settings.ACTION_SETTINGS), 0)) {
+            String pkg = info.activityInfo.packageName;
+            if (pkg.equals(PHONE_SETTINGS)) continue;
+            Intent intent = pm.getLeanbackLaunchIntentForPackage(pkg);
+            if (intent != null) return intent;
+        }
+        return null;
+    }
+
+    /**
+     * {@code pkg}'s main Settings page, or null when it isn't installed: its TV entry, else its launcher entry, else
+     * its answer to "open Settings" (Google's TV Settings has no launcher entry at all; on the TX6 that is
+     * com.android.tv.settings/.MainSettings).
+     */
+    private static Intent settingsIn(PackageManager pm, String pkg) {
+        Intent intent = pm.getLeanbackLaunchIntentForPackage(pkg);
+        if (intent == null) intent = pm.getLaunchIntentForPackage(pkg);
+        if (intent != null) return intent;
+        intent = new Intent(Settings.ACTION_SETTINGS).setPackage(pkg);
+        return pm.resolveActivity(intent, 0) != null ? intent : null;
     }
 
     /**
