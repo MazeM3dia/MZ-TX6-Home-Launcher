@@ -31,6 +31,8 @@ final class PrayerHeader {
     private boolean enabled;
     private boolean started;
     private boolean querying;
+    /** The observer is registered with the add-on's provider. */
+    private boolean listening;
     private Bundle data;
     private long queriedAt;
 
@@ -57,6 +59,7 @@ final class PrayerHeader {
         }
         enabled = on;
         data = null;
+        listen(enabled && started);
         if (enabled && started) query();
         render();
     }
@@ -69,14 +72,29 @@ final class PrayerHeader {
     /** Home on screen: listen for new times, and ask if what we have is old. */
     void start() {
         started = true;
-        context.getContentResolver().registerContentObserver(Prayers.uri(), false, changes);
+        listen(enabled);
         if (enabled && (data == null || System.currentTimeMillis() - queriedAt > REQUERY_MS)) query();
         render();
     }
 
     void stop() {
         started = false;
-        context.getContentResolver().unregisterContentObserver(changes);
+        listen(false);
+    }
+
+    /**
+     * Watches the add-on's provider for new times, only while it is enabled (so installed): from Android 11 on,
+     * registering for an authority that no installed app provides throws a SecurityException.
+     */
+    private void listen(boolean on) {
+        if (on == listening) return;
+        try {
+            if (on) context.getContentResolver().registerContentObserver(Prayers.uri(), false, changes);
+            else context.getContentResolver().unregisterContentObserver(changes);
+            listening = on;
+        } catch (SecurityException e) {
+            listening = false;   // the add-on went away between the check and here
+        }
     }
 
     /** Every minute, from the clock. A new day asks the add-on for its times. */
