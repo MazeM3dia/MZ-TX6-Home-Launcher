@@ -3,7 +3,7 @@ android {
     namespace 'com.lionlev.tv.capacity'
     compileSdk 35
     buildFeatures { aidl false }
-    defaultConfig { applicationId 'com.lionlev.tv.capacity'; minSdk 26; targetSdk 34; versionCode 1; versionName '1.0' }
+    defaultConfig { applicationId 'com.lionlev.tv.capacity'; minSdk 26; targetSdk 34; versionCode 2; versionName '1.1' }
     buildTypes { release {
         minifyEnabled true
         shrinkResources true

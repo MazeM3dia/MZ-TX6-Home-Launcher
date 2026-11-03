@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_background">#FFD62829</color>
+    <!-- Same look as Device Report and the launcher. -->
+    <color name="accent">#FF3D7BE0</color>
+    <color name="high">#FFFFB74D</color>
+    <color name="icon">#FFAAB4C3</color>
 </resources>

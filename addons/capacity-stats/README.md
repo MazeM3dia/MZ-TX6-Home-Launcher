@@ -1,26 +1,20 @@
 # Capacity Stats
 
-Optional standalone Android TV module card, maintained by [lionlev21](https://github.com/lionlev21).
-Build with JDK 17 and Android SDK 34: `./gradlew testReleaseUnitTest lintRelease assembleRelease`.
-The small gradlew scripts reuse the repository’s pinned Gradle wrapper with this folder as the project;
-no wrapper JAR is copied into the add-on and no launcher source is included. Keep this folder inside
-the repository when building. Install the APK you build with ADB or your preferred installer.
-No binaries or prebuilt APKs are committed.
+Memory and storage in use on the box, opened from MZ TX6 Home's Customize > Add-ons. Package
+`com.lionlev.tv.capacity`, kept so the launcher finds it.
 
-The launcher discovers the static module card and asks whether to show it. Opening the card shows
-live readings in this app. Module spec 1 has static captions: it cannot show live counters on Home.
-No launcher changes are required. English and Hebrew UI, standard locale direction for other languages.
-Reads refresh every ten seconds only while this screen is resumed; no background service survives leaving it.
+Started as the cleanyourtv add-on by [lionlev21](https://github.com/lionlev21) (MIT, see
+../LICENSE-cleanyourtv.txt). Version 1.1 (3 Nov 2026) is redrawn in the Device Report look: Inter Display
+(Light, Regular, Bold; FONT-LICENSE-OFL.txt), a light title and two cards, Memory and Storage, each with
+"0.7GB / 2.0GB" in use of total, a bar and "1.3GB free · 35% used". The memory bar turns orange above 85 %,
+like the line on Home. Icons are the launcher's Lucide memory-stick and hard-drive. English only.
+
+Same figures as the launcher's line under the buttons: memory from ActivityManager (total minus available),
+storage from StatFs on the data partition. Read every ten seconds on the main thread, only while the screen is
+on top; no thread, no service. Back closes it.
+
+Build from this folder: `./gradlew testReleaseUnitTest lintRelease assembleRelease` (JDK 21, see ../../CLAUDE.md).
 
 ## Permissions
 
-No permissions requested. No network, telemetry, ads or background service. Reads local
-/proc/meminfo and the data filesystem's capacity. Available/total and used/total RAM are labeled
-separately; “used” is total minus available, not process RSS. On old kernels, available is estimated
-as MemFree + Buffers + Cached, bounded by MemTotal. Missing/invalid values are omitted.
-
-## Validation
-
-Tested on a **Sony KD-50X85J running Android TV 12**.
-
-6 JVM tests, lintRelease and release build passed. On real hardware verified both RAM ratios, storage, Hebrew direction, module-card recognition and stopping the worker on Back.
+None. No network, telemetry, ads or background service.

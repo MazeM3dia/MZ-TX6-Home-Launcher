@@ -1,10 +1,9 @@
 <resources>
     <string name="app_name">Capacity Stats</string>
-    <string name="loading">Reading counters…</string>
-    <string name="unavailable">Readings unavailable</string>
-    <string name="back">Back</string>
-    <string name="memory">Available RAM: %1$s</string>
-    <string name="memory_used">Used RAM: %1$s</string>
-    <string name="storage">Available storage: %1$s</string>
-    <string name="note">Available RAM includes reclaimable caches; used RAM is total minus available. Storage refers to the data filesystem.</string>
+    <string name="about">Memory and storage in use on this box. Updates every 10 seconds.</string>
+    <string name="memory">Memory</string>
+    <string name="storage">Storage</string>
+    <!-- "1.3GB free · 35% used" -->
+    <string name="detail">%1$s free · %2$d%% used</string>
+    <string name="note">Memory in use is total minus what Android can free at once (caches included). Storage is the box\'s internal storage for apps and data. Same figures as the line under the buttons on Home.</string>
 </resources>
