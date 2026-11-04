@@ -7,7 +7,10 @@ Plain Java on the Android framework only: no AndroidX, no libraries, no internet
 
 ## Features
 
-- **Clock and date** with a greeting, plus the Hijri date and the next prayer when Waktu Solat is installed
+- **Opens straight after a power cut**: starts in Android's early (Direct Boot) stage, so the box goes from the
+  Android logo to MZ TX6 Home without the stock launcher taking over (new in 2.0)
+- **Clock and date** with a greeting and the box's name ("Good morning, Living Room"), plus the Hijri date and the
+  next prayer when Waktu Solat is installed
 - **Memory and storage** under the buttons, as used/total ("0.7GB/2.0GB"), orange when RAM is nearly full
 - **Favourites** in a band at the bottom of the first screen, all apps in a grid below; the focused app's name
   shown large above them
@@ -16,9 +19,11 @@ Plain Java on the Android framework only: no AndroidX, no libraries, no internet
 - **Hold OK on a tile** (or press Menu) to move it, add it to or remove it from favourites, hide it, or open App
   info, in a menu that follows the theme
 - **Customize** side panel: 5 colour themes, wallpaper, apps per row, button labels, animations, memory and
-  storage line, open an app on start, hidden apps, add-ons, Waktu Solat zone, set as default Home. Every change
+  storage line, open an app on start, hidden apps, add-ons, Waktu Solat zone, set as default Home, and which
+  Settings app the Settings button opens (the TV one by default, or Android's full Settings). Every change
   applies at once
-- **Network label**: Wi-Fi, Ethernet, orange "No internet", red "Offline"
+- **Network label**: Wi-Fi, Ethernet, orange "No internet", red "Offline"; "· VPN" while a VPN such as 1.1.1.1
+  is on, "· DNS" while Private DNS is in use
 - **Clock screensaver** (Settings > Screen saver > MZ TX6 Clock)
 - **Home key** goes back to the tile of the app you left; pressed on Home, it goes to the top
 - Kept clear of the bottom edge of the screen, so things standing in front of the TV don't hide the focus
@@ -36,7 +41,7 @@ Separate apps in [addons/](addons/). The launcher works without any of them.
 |---|---|---|
 | [Waktu Solat](addons/waktu-solat/) | JAKIM e-Solat times for your zone, in Malay: the eight times, the next prayer with a countdown, the Hijri date | A tile; feeds the header (Hijri date, next prayer) |
 | [Device Report](addons/device-report/) | A full report of the box (hardware, codecs, Home and Settings apps, every app with its permissions), saved as .txt and .json in Download | Customize > Add-ons |
-| [Capacity Stats](addons/capacity-stats/) | Free and total memory and storage | Customize > Add-ons |
+| [Capacity Stats](addons/capacity-stats/) | Memory and storage in use, with a bar and what's free (same figures as Home) | Customize > Add-ons |
 
 Device Report and Capacity Stats don't take a tile in MZ TX6 Home; other launchers and Settings still list them
 as normal apps.
@@ -59,6 +64,11 @@ once it works well, press Home again and choose *Always*. Customize > Default ho
 
 **Safe to try:** the stock launcher stays installed and enabled. To go back, open MZ TX6 Home's App info and
 clear its defaults, or uninstall it; the stock launcher takes over again.
+
+**Updating from 1.2 or older:** 2.0 is signed with a new key, so it can't install over 1.2. Uninstall the old
+MZ TX6 Home (and Capacity Stats 1.0) first, then install. The launcher's own choices (favourites, order, theme,
+wallpaper) reset once; Waktu Solat keeps its zone. If you disabled the stock launcher, enable it again before
+uninstalling, so the box always has a Home app. Later versions install over 2.0 as normal.
 
 ## Permissions
 
